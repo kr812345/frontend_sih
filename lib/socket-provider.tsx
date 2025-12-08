@@ -32,8 +32,12 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     }
 
     // Helper to create socket with given transports
+    // Extract base URL from API URL (remove /api/v1 suffix)
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+    const socketUrl = apiUrl.replace('/api/v1', '');
+    
     const createSocket = (transports: Array<'websocket' | 'polling'>) =>
-      io('http://localhost:5000', {
+      io(socketUrl, {
         path: '/socket.io',
         transports,
         auth: { token },

@@ -69,7 +69,8 @@ export default function ChatList({ onChatSelect, selectedChatId }: ChatListProps
   const fetchChats = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/v1/chats', {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+      const response = await fetch(`${apiUrl}/chats`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

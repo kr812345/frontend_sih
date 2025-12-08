@@ -39,12 +39,6 @@ export default function RegisterPage() {
         
         if (!response.ok) {
            console.error(`Fetch failed with status: ${response.status}`);
-           // Fallback for localhost development if env var is messed up
-           if (url.includes('api/v1/api/v1')) {
-               const fixedUrl = 'http://localhost:5000/api/v1/auth/colleges';
-               console.log('Retrying with fixed URL:', fixedUrl);
-               response = await fetch(fixedUrl);
-           }
         }
 
         const result = await response.json();
