@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { Linkedin, Github, Twitter, Globe, Mail, Edit, MapPin, Briefcase, GraduationCap, Users, MessageCircle, Activity, Star } from 'lucide-react';
+import { Linkedin, Github, Twitter, Globe, Mail, Edit, MapPin, Briefcase, GraduationCap, Users, MessageCircle, Activity, Star, Clock } from 'lucide-react';
 import { Button, LoadingSpinner, Badge } from '@/components/ui';
 import { MY_PROFILE, AlumniProfileComplete } from '@/src/data/mockData';
 
@@ -51,22 +51,22 @@ export default function MyProfilePage() {
 
                             {/* Social Pills */}
                             <div className="flex gap-2 justify-center flex-wrap max-w-[200px]">
-                                {profile.socials.linkedin && (
+                                {profile.socials?.linkedin && (
                                     <a href={profile.socials.linkedin} className="p-2 bg-white rounded-full text-[#001145] hover:bg-[#001145] hover:text-white transition-colors shadow-sm">
                                         <Linkedin size={18} />
                                     </a>
                                 )}
-                                {profile.socials.github && (
+                                {profile.socials?.github && (
                                     <a href={profile.socials.github} className="p-2 bg-white rounded-full text-[#001145] hover:bg-[#001145] hover:text-white transition-colors shadow-sm">
                                         <Github size={18} />
                                     </a>
                                 )}
-                                {profile.socials.twitter && (
+                                {profile.socials?.twitter && (
                                     <a href={profile.socials.twitter} className="p-2 bg-white rounded-full text-[#001145] hover:bg-[#001145] hover:text-white transition-colors shadow-sm">
                                         <Twitter size={18} />
                                     </a>
                                 )}
-                                {profile.socials.portfolio && (
+                                {profile.socials?.portfolio && (
                                     <a href={profile.socials.portfolio} className="p-2 bg-white rounded-full text-[#001145] hover:bg-[#001145] hover:text-white transition-colors shadow-sm">
                                         <Globe size={18} />
                                     </a>
@@ -116,6 +116,13 @@ export default function MyProfilePage() {
                                     <p className="text-xs uppercase font-bold text-[#001145]/50 tracking-wider">Faculty</p>
                                     <p className="font-semibold text-[#001145]">{profile.alumniRelation.faculty}</p>
                                 </div>
+                                <div>
+                                    <p className="text-xs uppercase font-bold text-[#001145]/50 tracking-wider">Karma Points</p>
+                                    <div className="font-semibold text-[#001145] flex items-center gap-1">
+                                        <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                                        {profile.karmaPoints ? profile.karmaPoints.toLocaleString() : '0'}
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -133,8 +140,8 @@ export default function MyProfilePage() {
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
                                 className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-all mb-1 last:mb-0 flex items-center justify-between group ${activeTab === tab
-                                        ? 'bg-white text-[#001145] shadow-sm'
-                                        : 'text-[#001145]/60 hover:bg-white/50 hover:text-[#001145]'
+                                    ? 'bg-white text-[#001145] shadow-sm'
+                                    : 'text-[#001145]/60 hover:bg-white/50 hover:text-[#001145]'
                                     }`}
                             >
                                 {tab}
@@ -147,8 +154,6 @@ export default function MyProfilePage() {
                 {/* Content Area */}
                 <div className="flex-1 min-w-0">
                     <div className="bg-white rounded-3xl p-8 border border-[#e4f0ff] min-h-[500px]">
-
-                        {/* Animations would go here, simplified for now */}
 
                         {activeTab === 'Overview' && (
                             <div className="space-y-8">
@@ -259,7 +264,7 @@ export default function MyProfilePage() {
 
                         {activeTab === 'Activities' && (
                             <div className="space-y-4">
-                                {profile.activities.map((act) => (
+                                {profile.activities?.map((act) => (
                                     <div key={act.id} className="flex gap-4 items-center p-4 rounded-xl hover:bg-[#f8fbff] transition-colors border border-transparent hover:border-[#e4f0ff]">
                                         <div className="w-10 h-10 rounded-full bg-[#e4f0ff] flex items-center justify-center flex-shrink-0">
                                             <Activity size={16} className="text-[#001145]" />
