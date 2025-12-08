@@ -37,6 +37,8 @@ export interface AlumniProfileComplete {
         twitter?: string;
         portfolio?: string;
     };
+    karmaPoints?: number;
+    walletId?: string;
     alumniRelation: {
         department: string;
         faculty: string;
@@ -78,7 +80,7 @@ export const MY_PROFILE: AlumniProfileComplete = {
     name: 'Aarav Mehta',
     email: 'aarav.mehta@alumni.sarthak.edu',
     phone: '+91 98765 43210',
-    avatarUrl: '/profile.jpeg',
+    avatarUrl: '/aarav.png',
     bio: 'Passionate Full-Stack Developer with 6+ years of experience building scalable web applications. Currently leading engineering teams at Google. Love mentoring students and contributing to open-source projects. Speaker at tech conferences and active community builder.',
     degree: 'B.Tech',
     major: 'Computer Science & Engineering',
@@ -93,6 +95,8 @@ export const MY_PROFILE: AlumniProfileComplete = {
         twitter: 'https://twitter.com/aaravmehta_dev',
         portfolio: 'https://aaravmehta.dev',
     },
+    karmaPoints: 10000,
+    walletId: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
     alumniRelation: {
         department: 'Computer Science & Engineering',
         faculty: 'Faculty of Engineering',
@@ -335,6 +339,46 @@ for (let i = 6; i <= 20; i++) {
     });
 }
 
+export const MOCK_CAMPAIGNS = [
+    {
+        id: '1', title: 'Scholarship Fund for Underprivileged Students', shortDescription: 'Help brilliant students complete their education.',
+        description: 'Support 50 students from underprivileged backgrounds.', category: 'Scholarship', goalAmount: 2500000, raisedAmount: 1875000,
+        donorsCount: 234, status: 'active', isFeatured: true, createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+        endDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString()
+    },
+    {
+        id: '2', title: 'New Computer Lab for Engineering', shortDescription: 'Upgrade our computer lab with modern equipment.',
+        description: 'State-of-the-art lab for engineering students.', category: 'Infrastructure', goalAmount: 5000000, raisedAmount: 3250000,
+        donorsCount: 156, status: 'active', isFeatured: true, createdAt: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
+        endDate: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString()
+    },
+    {
+        id: '3', title: 'AI Research Center Development', shortDescription: 'Build a world-class AI research facility.',
+        description: 'Cutting-edge AI research center.', category: 'Research', goalAmount: 10000000, raisedAmount: 4500000,
+        donorsCount: 89, status: 'active', isFeatured: false, createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
+        endDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString()
+    },
+    {
+        id: '4', title: 'Sports Complex Renovation', shortDescription: 'Renovate sports facilities to Olympic standards.',
+        description: 'Major upgrades for national tournaments.', category: 'Sports', goalAmount: 8000000, raisedAmount: 6800000,
+        donorsCount: 312, status: 'active', isFeatured: false, createdAt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString(),
+        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+    },
+    {
+        id: '5', title: 'Community Outreach Program', shortDescription: 'Fund annual community service initiatives.',
+        description: 'Education and healthcare for nearby villages.', category: 'Community', goalAmount: 1000000, raisedAmount: 750000,
+        donorsCount: 178, status: 'active', isFeatured: false, createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+        endDate: new Date(Date.now() + 75 * 24 * 60 * 60 * 1000).toISOString()
+    },
+];
+export const MOCK_DONATIONS = [
+    { id: 'don-001', campaignId: '1', campaignTitle: 'Scholarship Fund for Underprivileged Students', amount: 5000, date: '2024-11-20', transactionId: 'TXN123456789' },
+    { id: 'don-002', campaignId: '2', campaignTitle: 'New Computer Lab for Engineering', amount: 10000, date: '2024-11-15', transactionId: 'TXN987654321' },
+    { id: 'don-003', campaignId: '1', campaignTitle: 'Scholarship Fund for Underprivileged Students', amount: 2500, date: '2024-10-25', transactionId: 'TXN456123789' },
+    { id: 'don-004', campaignId: '3', campaignTitle: 'AI Research Center Development', amount: 15000, date: '2024-10-10', transactionId: 'TXN789123456' },
+    { id: 'don-005', campaignId: '5', campaignTitle: 'Community Outreach Program', amount: 1000, date: '2024-09-30', transactionId: 'TXN321654987' },
+];
+
 // ===== MOCK EVENTS =====
 export const MOCK_EVENTS = [
     { _id: 'evt-001', title: 'Annual Alumni Reunion 2024', name: 'Annual Alumni Reunion 2024', date: '2024-12-20', from: { date: '2024-12-20', time: '10:00' }, to: { date: '2024-12-20', time: '18:00' }, description: 'Join us for the grand annual reunion! Reconnect with batchmates, meet faculty, and celebrate our alma mater.', location: 'Sarthak University Campus, Main Auditorium', venue: 'Main Auditorium', eventType: 'Reunion', registeredUsers: Array(156), status: 'upcoming', createdAt: '2024-11-01' },
@@ -379,4 +423,5 @@ export const MOCK_SUGGESTIONS = MOCK_ALUMNI.filter(a => a.connectionStatus === '
     gradYear: a.gradYear,
     mutualConnections: Math.floor(Math.random() * 15) + 1,
     reason: ['Same batch', 'Similar interests', 'Same department', 'Worked at same company'][i % 4],
+    status: 'suggestion',
 }));

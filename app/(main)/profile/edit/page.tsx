@@ -271,6 +271,16 @@ export default function EditProfilePage() {
                 />
                 {errors.email && <p className="text-red-500 text-xs mt-1 flex items-center gap-1"><AlertCircle size={12} />{errors.email}</p>}
               </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium mb-2" style={{ color: theme.tertiary }}>Wallet ID (Metamask/Web3)</label>
+                <input
+                  type="text"
+                  value={profile.walletId || ''}
+                  onChange={(e) => updateField('walletId', e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-200 font-mono text-sm"
+                  placeholder="0x..."
+                />
+              </div>
               <div>
                 <label className="block text-sm font-medium mb-2" style={{ color: theme.tertiary }}>Phone</label>
                 <input type="tel" value={profile.phone} onChange={(e) => updateField('phone', e.target.value)} className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-200" />
