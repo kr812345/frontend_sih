@@ -119,7 +119,7 @@ export default function MyProfilePage() {
                                 <div>
                                     <p className="text-xs uppercase font-bold text-[#001145]/50 tracking-wider">Karma Points</p>
                                     <div className="font-semibold text-[#001145] flex items-center gap-1">
-                                        <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+                                        <span className="w-2 h-2 rounded-full bg-[#001145] animate-pulse"></span>
                                         {profile.karmaPoints ? profile.karmaPoints.toLocaleString() : '0'}
                                     </div>
                                 </div>

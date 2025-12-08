@@ -156,6 +156,13 @@ export default function ViewProfilePage() {
                   <p className="text-xs uppercase font-bold text-[#001145]/50 tracking-wider">Faculty</p>
                   <p className="font-semibold text-[#001145]">{profile.alumniRelation.faculty}</p>
                 </div>
+                <div>
+                  <p className="text-xs uppercase font-bold text-[#001145]/50 tracking-wider">Karma Points</p>
+                  <div className="font-semibold text-[#001145] flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-[#001145] animate-pulse"></span>
+                    {profile.karmaPoints ? profile.karmaPoints.toLocaleString() : '0'}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -173,8 +180,8 @@ export default function ViewProfilePage() {
                 key={tab}
                 onClick={() => setActiveTab(tab)}
                 className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-all mb-1 last:mb-0 flex items-center justify-between group ${activeTab === tab
-                    ? 'bg-white text-[#001145] shadow-sm'
-                    : 'text-[#001145]/60 hover:bg-white/50 hover:text-[#001145]'
+                  ? 'bg-white text-[#001145] shadow-sm'
+                  : 'text-[#001145]/60 hover:bg-white/50 hover:text-[#001145]'
                   }`}
               >
                 {tab}
