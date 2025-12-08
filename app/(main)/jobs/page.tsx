@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Briefcase, MapPin, Clock, Building2, Search, Plus, DollarSign, ExternalLink } from 'lucide-react';
+import { Briefcase, MapPin, Clock, Building2, Search, Plus, DollarSign, ExternalLink, Sparkles } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { Button, LoadingSpinner } from '@/components/ui';
+import AIAnalysisModal from '@/components/AIAnalysisModal';
+import { analyzeJobCompatibility } from '@/src/lib/gemini';
 import { MOCK_JOBS } from '@/src/data/mockData';
 import { getAllJobs } from '@/src/api/jobs';
 
@@ -30,6 +32,35 @@ export default function JobsPage() {
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [typeFilter, setTypeFilter] = useState('all');
 
+  // AI Analysis State
+  const [isAIModalOpen, setIsAIModalOpen] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [analyzingJobTitle, setAnalyzingJobTitle] = useState('');
+
+  const handleAnalyzeJob = async (e: React.MouseEvent, job: Job) => {
+    e.stopPropagation(); // Prevent card click
+    setAnalyzingJobTitle(job.title);
+    setAiAnalysis(null);
+    setIsAIModalOpen(true);
+    setIsAnalyzing(true);
+    
+    try {
+      // Pass a mock user profile or fetch real one if available
+      const userProfile = {
+        name: "Current User",
+        skills: ["React", "JavaScript", "Node.js"], // ideally fetch from store
+        experience: "Students"
+      };
+      const result = await analyzeJobCompatibility(job, userProfile);
+      setAiAnalysis(result);
+    } catch (error) {
+      setAiAnalysis("Failed to analyze job compatibility. Please try again.");
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
   useEffect(() => {
     const fetchJobs = async () => {
       try {
@@ -41,12 +72,12 @@ export default function JobsPage() {
             experienceLevel: j.experienceLevel || 'Not specified',
             deadline: j.deadline ? new Date(j.deadline).toLocaleDateString() : 'Open',
             description: j.description, createdAt: j.createdAt, skillsRequired: j.skillsRequired || [],
-          })));
+          } as Job)));
         } else {
-          setJobs(MOCK_JOBS);
+          setJobs(MOCK_JOBS as Job[]);
         }
       } catch {
-        setJobs(MOCK_JOBS);
+        setJobs(MOCK_JOBS as Job[]);
       } finally {
         setLoading(false);
       }
@@ -131,9 +162,19 @@ export default function JobsPage() {
                   }`}>
                 <div className="flex items-start justify-between mb-2">
                   <h3 className="text-lg font-bold text-[#001145]">{job.title}</h3>
-                  <span className={`px-3 py-1 rounded text-xs font-medium ${job.type === 'full-time' ? 'bg-[#e4f0ff] text-[#001145]' : 'bg-[#e4f0ff] text-[#001145]'
-                    }`}>{job.type === 'full-time' ? 'Full-time' : 'Internship'}</span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={(e) => handleAnalyzeJob(e, job)}
+                      className="p-1.5 text-[#001145] hover:bg-[#e4f0ff] rounded-full transition-colors"
+                      title="Analyze with AI"
+                    >
+                      <Sparkles size={18} />
+                    </button>
+                    <span className={`px-3 py-1 rounded text-xs font-medium ${job.type === 'full-time' ? 'bg-[#e4f0ff] text-[#001145]' : 'bg-[#e4f0ff] text-[#001145]'
+                      }`}>{job.type === 'full-time' ? 'Full-time' : 'Internship'}</span>
+                  </div>
                 </div>
+
                 <p className="text-gray-600 flex items-center gap-2 mb-2"><Building2 size={14} />{job.company}</p>
                 <div className="flex flex-wrap gap-3 text-sm text-gray-500">
                   {job.location && <span className="flex items-center gap-1"><MapPin size={14} />{job.location}</span>}
@@ -187,6 +228,13 @@ export default function JobsPage() {
           </div>
         </div>
       )}
+      <AIAnalysisModal
+        isOpen={isAIModalOpen}
+        onClose={() => setIsAIModalOpen(false)}
+        loading={isAnalyzing}
+        analysis={aiAnalysis}
+        title={`Job Fit Analysis: ${analyzingJobTitle}`}
+      />
     </div>
   );
 }

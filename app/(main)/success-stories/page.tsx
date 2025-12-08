@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Star, Heart, TrendingUp, Filter, Plus, ChevronRight } from 'lucide-react';
 import { Button, Card, Badge, Avatar, PageHeader, LoadingSpinner } from '@/components/ui';
 import { getSuccessStories, likeStory, SuccessStory } from '@/src/api/successStories';
+import { MOCK_SUCCESS_STORIES } from '@/src/data/mockData';
 
 const CATEGORIES = ['all', 'Entrepreneurship', 'Career', 'Research', 'Social Impact', 'Innovation'];
 
@@ -17,9 +18,10 @@ export default function SuccessStoriesPage() {
     const fetchData = async () => {
       try {
         const data = await getSuccessStories();
-        setStories(data?.items || []);
+        setStories(data?.items?.length ? data.items : MOCK_SUCCESS_STORIES as SuccessStory[]);
       } catch (error) {
-        console.error(error);
+        console.log('Using mock success stories data');
+        setStories(MOCK_SUCCESS_STORIES as SuccessStory[]);
       } finally {
         setLoading(false);
       }

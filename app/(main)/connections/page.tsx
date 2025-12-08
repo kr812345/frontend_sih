@@ -5,6 +5,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Search, UserPlus, Check, X, MessageSquare, Users, Clock, Sparkles } from 'lucide-react';
 import { Button, LoadingSpinner } from '@/components/ui';
+import AIAnalysisModal from '@/components/AIAnalysisModal';
+import { analyzeProfile } from '@/src/lib/gemini';
 import { MOCK_CONNECTIONS, MOCK_PENDING_REQUESTS, MOCK_SUGGESTIONS } from '@/src/data/mockData';
 import { getConnections, getPendingRequests, getConnectionSuggestions } from '@/src/api/connections';
 
@@ -15,6 +17,39 @@ export default function ConnectionsPage() {
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  
+  // AI Analysis State
+  const [isAIModalOpen, setIsAIModalOpen] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [selectedProfileName, setSelectedProfileName] = useState('');
+
+  interface Suggestion {
+    id: string;
+    name: string;
+    avatarUrl?: string;
+    currentRole?: string;
+    currentCompany?: string;
+    gradYear?: string;
+    mutualConnections: number;
+    reason: string;
+  }
+
+  const handleAnalyzeProfile = async (profile: Suggestion) => {
+    setSelectedProfileName(profile.name);
+    setAiAnalysis(null);
+    setIsAIModalOpen(true);
+    setIsAnalyzing(true);
+    
+    try {
+      const result = await analyzeProfile(profile);
+      setAiAnalysis(result);
+    } catch (error) {
+      setAiAnalysis("Failed to analyze profile. Please try again.");
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -199,14 +234,29 @@ export default function ConnectionsPage() {
                   <p className="text-xs text-[#001145] mt-1">{sug.mutualConnections} mutual connections</p>
                 </div>
               </div>
-              <button onClick={() => handleConnect(sug.id)}
-                className="w-full mt-4 py-2 bg-[#001145] text-white rounded-lg text-sm font-medium flex items-center justify-center gap-2">
-                <UserPlus size={14} /> Connect
-              </button>
+              <div className="flex gap-2 mt-4">
+                <button 
+                  onClick={() => handleAnalyzeProfile(sug)}
+                  className="flex-1 py-2 bg-[#e4f0ff] text-[#001145] rounded-lg text-sm font-medium flex items-center justify-center gap-2 hover:bg-[#d0e6ff] transition-colors"
+                >
+                  <Sparkles size={14} /> Analyze
+                </button>
+                <button onClick={() => handleConnect(sug.id)}
+                  className="flex-1 py-2 bg-[#001145] text-white rounded-lg text-sm font-medium flex items-center justify-center gap-2 hover:bg-[#001145]/90 transition-colors">
+                  <UserPlus size={14} /> Connect
+                </button>
+              </div>
             </div>
           ))}
         </div>
       )}
+      <AIAnalysisModal
+        isOpen={isAIModalOpen}
+        onClose={() => setIsAIModalOpen(false)}
+        loading={isAnalyzing}
+        analysis={aiAnalysis}
+        title={`AI Analysis: ${selectedProfileName}`}
+      />
     </div>
   );
 }

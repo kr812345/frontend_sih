@@ -95,7 +95,8 @@ export default function ChatWindow({ chatId }: ChatWindowProps) {
   const fetchChatData = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/v1/chats/${chatId}`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
+      const response = await fetch(`${apiUrl}/chats/${chatId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
@@ -112,8 +113,9 @@ export default function ChatWindow({ chatId }: ChatWindowProps) {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1';
       const response = await fetch(
-        `http://localhost:5000/api/v1/chats/${chatId}/messages`,
+        `${apiUrl}/chats/${chatId}/messages`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
