@@ -19,7 +19,7 @@ export default function LoginPage() {
 
     try {
       await login({ email, password });
-      window.location.href = '/profile';
+      window.location.href = '/home';
     } catch (err: any) {
       const errorMessage = err?.response?.data?.message || err?.response?.data?.error || 'Invalid email or password';
       setError(errorMessage);

@@ -15,6 +15,7 @@ const navItems = [
   { name: "Events", href: "/events" },
   { name: "Campaigns", href: "/campaigns" },
   { name: "Stories", href: "/success-stories" },
+  { name: "AI Chatbot", href: "/chatbot" },
 ];
 
 export default function Navbar() {
@@ -25,7 +26,7 @@ export default function Navbar() {
   const [userDropdownOpen, setUserDropdownOpen] = useState(false);
 
   // Ref to handle clicking outside the dropdown to close it
-  const dropdownRef = useRef(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -37,8 +38,8 @@ export default function Navbar() {
 
   // Close dropdown if clicked outside
   useEffect(() => {
-    function handleClickOutside(event) {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setUserDropdownOpen(false);
       }
     }
