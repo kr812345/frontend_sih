@@ -3,380 +3,279 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import {
-    Linkedin, Github, Twitter, Globe, Mail, MapPin, Phone,
-    Briefcase, GraduationCap, Award, Edit, Calendar,
-    Clock, Star, Users, MessageCircle, ChevronRight
-} from 'lucide-react';
-import { Button, Card, Badge, LoadingSpinner } from '@/components/ui';
+import { Linkedin, Github, Twitter, Globe, Mail, Edit, MapPin, Briefcase, GraduationCap, Users, MessageCircle, Activity, Star } from 'lucide-react';
+import { Button, LoadingSpinner, Badge } from '@/components/ui';
 import { MY_PROFILE, AlumniProfileComplete } from '@/src/data/mockData';
-import { verifyAlumni } from '@/src/api/auth';
-import { getAlumniProfile } from '@/src/api/alumni';
 
 export default function MyProfilePage() {
-    const [profile, setProfile] = useState<AlumniProfileComplete>(MY_PROFILE);
+    const [profile, setProfile] = useState<AlumniProfileComplete | null>(null);
     const [loading, setLoading] = useState(true);
     const [activeTab, setActiveTab] = useState('Overview');
 
-    const tabs = ['Overview', 'Experience', 'Education', 'Skills', 'Achievements', 'Activity'];
+    const tabs = ['Overview', 'Experience', 'Education', 'Connections', 'Message', 'Activities'];
 
     useEffect(() => {
-        const fetchProfile = async () => {
-            try {
-                const authData = await verifyAlumni();
-                const payload: any = (authData as any)?.data ?? authData;
-                const userId = payload?.user?.id || payload?.user?._id || payload?.id;
-
-                if (userId) {
-                    const profileData = await getAlumniProfile(userId);
-                    setProfile({ ...MY_PROFILE, ...profileData } as AlumniProfileComplete);
-                }
-            } catch (err) {
-                console.log('Using mock profile data');
-                setProfile(MY_PROFILE);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchProfile();
+        setTimeout(() => {
+            setProfile(MY_PROFILE);
+            setLoading(false);
+        }, 300);
     }, []);
 
-    if (loading) return <LoadingSpinner fullScreen text="Loading your profile..." />;
+    if (loading || !profile) return <LoadingSpinner fullScreen text="Loading profile..." />;
 
     const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').toUpperCase();
 
     return (
-        <div className="space-y-6">
-            {/* Profile Header Card */}
-            <Card className="overflow-hidden border-0 shadow-lg">
-                <div className="h-32 relative bg-gradient-to-r from-[#001145] to-[#001439]">
-                    <div className="absolute inset-0 opacity-10">
-                        <div className="absolute top-2 right-8 w-24 h-24 rounded-full bg-white/20" />
-                        <div className="absolute bottom-0 left-1/4 w-32 h-32 rounded-full bg-white/10" />
-                    </div>
+        <div className="max-w-6xl mx-auto space-y-6">
+            {/* Creative Header Section */}
+            <div className="relative bg-[#e4f0ff] rounded-3xl overflow-hidden shadow-sm border border-[#e4f0ff]">
+                {/* Decorative Background Pattern */}
+                <div className="absolute top-0 left-0 w-full h-32 bg-[#001145] opacity-5">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-white rounded-full mix-blend-overlay filter blur-3xl opacity-50 transform translate-x-1/2 -translate-y-1/2"></div>
+                    <div className="absolute bottom-0 left-0 w-48 h-48 bg-white rounded-full mix-blend-overlay filter blur-2xl opacity-50 transform -translate-x-1/2 translate-y-1/2"></div>
                 </div>
-                <div className="px-6 pb-6">
-                    <div className="flex flex-col md:flex-row gap-6 -mt-12 relative">
-                        {/* Avatar + Social Links */}
-                        <div className="flex flex-col items-center md:items-start">
-                            <div className="w-28 h-28 rounded-2xl overflow-hidden border-4 border-white shadow-xl bg-white flex-shrink-0">
+
+                <div className="relative p-8 pt-10">
+                    <div className="flex flex-col md:flex-row gap-8 items-start">
+                        {/* Avatar Column */}
+                        <div className="flex flex-col items-center gap-4 flex-shrink-0 z-10">
+                            <div className="w-40 h-40 rounded-2xl overflow-hidden border-4 border-white shadow-xl bg-white rotate-3 hover:rotate-0 transition-transform duration-300">
                                 {profile.avatarUrl ? (
-                                    <Image src={profile.avatarUrl} alt={profile.name} width={112} height={112} className="object-cover w-full h-full" priority />
+                                    <Image src={profile.avatarUrl} alt={profile.name} width={160} height={160} className="object-cover w-full h-full" priority />
                                 ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-2xl font-bold text-white bg-[#001145]">
+                                    <div className="w-full h-full flex items-center justify-center text-5xl font-bold text-white bg-[#001145]">
                                         {getInitials(profile.name)}
                                     </div>
                                 )}
                             </div>
-                            {/* Social Links Below Avatar */}
-                            <div className="flex items-center gap-2 mt-3">
+
+                            {/* Social Pills */}
+                            <div className="flex gap-2 justify-center flex-wrap max-w-[200px]">
                                 {profile.socials.linkedin && (
-                                    <a href={profile.socials.linkedin} target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-lg bg-[#e4f0ff] flex items-center justify-center hover:bg-[#d4e4f7] transition-colors">
-                                        <Linkedin size={18} className="text-[#0077b5]" />
+                                    <a href={profile.socials.linkedin} className="p-2 bg-white rounded-full text-[#001145] hover:bg-[#001145] hover:text-white transition-colors shadow-sm">
+                                        <Linkedin size={18} />
                                     </a>
                                 )}
                                 {profile.socials.github && (
-                                    <a href={profile.socials.github} target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-lg bg-[#e4f0ff] flex items-center justify-center hover:bg-[#d4e4f7] transition-colors">
-                                        <Github size={18} className="text-gray-700" />
+                                    <a href={profile.socials.github} className="p-2 bg-white rounded-full text-[#001145] hover:bg-[#001145] hover:text-white transition-colors shadow-sm">
+                                        <Github size={18} />
                                     </a>
                                 )}
                                 {profile.socials.twitter && (
-                                    <a href={profile.socials.twitter} target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-lg bg-[#e4f0ff] flex items-center justify-center hover:bg-[#d4e4f7] transition-colors">
-                                        <Twitter size={18} className="text-[#1da1f2]" />
+                                    <a href={profile.socials.twitter} className="p-2 bg-white rounded-full text-[#001145] hover:bg-[#001145] hover:text-white transition-colors shadow-sm">
+                                        <Twitter size={18} />
                                     </a>
                                 )}
                                 {profile.socials.portfolio && (
-                                    <a href={profile.socials.portfolio} target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-lg bg-[#e4f0ff] flex items-center justify-center hover:bg-[#d4e4f7] transition-colors">
-                                        <Globe size={18} className="text-[#001145]" />
+                                    <a href={profile.socials.portfolio} className="p-2 bg-white rounded-full text-[#001145] hover:bg-[#001145] hover:text-white transition-colors shadow-sm">
+                                        <Globe size={18} />
                                     </a>
                                 )}
                             </div>
                         </div>
 
-                        {/* Info */}
-                        <div className="flex-1 pt-4 md:pt-6">
-                            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+                        {/* Info Column */}
+                        <div className="flex-1 pt-2">
+                            <div className="flex justify-between items-start">
                                 <div>
-                                    <div className="flex items-center gap-3 flex-wrap">
-                                        <h1 className="text-2xl md:text-3xl font-bold text-[#001145]">{profile.name}</h1>
-                                        {profile.isVerified && <Badge variant="success">✓ Verified Alumni</Badge>}
+                                    <h1 className="text-4xl font-black text-[#001145] tracking-tight">{profile.name}</h1>
+                                    <div className="mt-2 flex flex-wrap gap-2 items-center text-[#001145]">
+                                        <span className="font-semibold">{profile.degree}</span>
+                                        <span className="w-1 h-1 rounded-full bg-[#001145]/40"></span>
+                                        <span className="font-medium">{profile.major}</span>
+                                        <span className="w-1 h-1 rounded-full bg-[#001145]/40"></span>
+                                        <span>{profile.gradYear}</span>
                                     </div>
-                                    <p className="text-lg mt-1 text-[#4a5f7c]">{profile.currentRole} at {profile.currentCompany}</p>
-                                    <div className="flex flex-wrap gap-4 mt-3 text-sm text-[#7088aa]">
-                                        {profile.location && <span className="flex items-center gap-1"><MapPin size={14} />{profile.location}</span>}
-                                        <span className="flex items-center gap-1"><GraduationCap size={14} />{profile.degree} • {profile.gradYear}</span>
-                                        <span className="flex items-center gap-1"><Mail size={14} />{profile.email}</span>
-                                    </div>
-                                </div>
-                                <Link href="/profile/edit">
-                                    <Button leftIcon={<Edit size={18} />}>Edit Profile</Button>
-                                </Link>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </Card>
-
-            {/* Tab Navigation */}
-            <div className="flex gap-2 overflow-x-auto pb-2">
-                {tabs.map((tab) => (
-                    <button
-                        key={tab}
-                        onClick={() => setActiveTab(tab)}
-                        className={`px-5 py-2.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-200 ${activeTab === tab
-                                ? 'bg-[#001145] text-white shadow-md'
-                                : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
-                            }`}
-                    >
-                        {tab}
-                    </button>
-                ))}
-            </div>
-
-            {/* Tab Content */}
-            {activeTab === 'Overview' && (
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    {/* Left Column - Main Info */}
-                    <div className="lg:col-span-2 space-y-6">
-                        {/* Bio */}
-                        <Card className="bg-[#e4f0ff] border-0">
-                            <h3 className="font-bold text-lg mb-3 text-[#001145]">About</h3>
-                            <p className="leading-relaxed text-[#4a5f7c]">{profile.bio}</p>
-                        </Card>
-
-                        {/* Quick Experience */}
-                        <Card className="bg-[#e4f0ff] border-0">
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="font-bold text-lg text-[#001145]">Experience</h3>
-                                <button onClick={() => setActiveTab('Experience')} className="text-sm font-medium flex items-center gap-1 text-[#7088aa]">
-                                    View all <ChevronRight size={16} />
-                                </button>
-                            </div>
-                            <div className="space-y-4">
-                                {profile.experiences.slice(0, 2).map((exp) => (
-                                    <div key={exp.id} className="flex gap-4">
-                                        <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center flex-shrink-0">
-                                            <Briefcase size={20} className="text-[#001145]" />
-                                        </div>
-                                        <div>
-                                            <h4 className="font-bold text-[#001145]">{exp.role}</h4>
-                                            <p className="text-[#4a5f7c]">{exp.company}</p>
-                                            <p className="text-sm text-[#7088aa]">{exp.startDate} - {exp.current ? 'Present' : exp.endDate}</p>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </Card>
-
-                        {/* Skills Preview */}
-                        <Card className="bg-[#e4f0ff] border-0">
-                            <div className="flex items-center justify-between mb-4">
-                                <h3 className="font-bold text-lg text-[#001145]">Skills</h3>
-                                <button onClick={() => setActiveTab('Skills')} className="text-sm font-medium flex items-center gap-1 text-[#7088aa]">
-                                    View all <ChevronRight size={16} />
-                                </button>
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                                {profile.skills.slice(0, 8).map((skill) => (
-                                    <span key={skill} className="px-4 py-2 rounded-full text-sm font-medium bg-white text-[#001145]">
-                                        {skill}
-                                    </span>
-                                ))}
-                                {profile.skills.length > 8 && (
-                                    <span className="px-4 py-2 rounded-full text-sm font-medium bg-[#a8bdda] text-[#001145]">
-                                        +{profile.skills.length - 8} more
-                                    </span>
-                                )}
-                            </div>
-                        </Card>
-                    </div>
-
-                    {/* Right Column - Sidebar */}
-                    <div className="space-y-6">
-                        {/* Contact Card */}
-                        <Card className="bg-[#e4f0ff] border-0">
-                            <h3 className="font-bold text-lg mb-4 text-[#001145]">Contact</h3>
-                            <div className="space-y-3">
-                                <a href={`mailto:${profile.email}`} className="flex items-center gap-3 text-sm text-[#4a5f7c] hover:underline">
-                                    <Mail size={16} className="text-[#7088aa]" /> {profile.email}
-                                </a>
-                                {profile.phone && (
-                                    <a href={`tel:${profile.phone}`} className="flex items-center gap-3 text-sm text-[#4a5f7c] hover:underline">
-                                        <Phone size={16} className="text-[#7088aa]" /> {profile.phone}
-                                    </a>
-                                )}
-                                {profile.location && (
-                                    <span className="flex items-center gap-3 text-sm text-[#4a5f7c]">
-                                        <MapPin size={16} className="text-[#7088aa]" /> {profile.location}
-                                    </span>
-                                )}
-                            </div>
-                        </Card>
-
-                        {/* Alumni Relation */}
-                        <Card className="bg-[#e4f0ff] border-0">
-                            <h3 className="font-bold text-lg mb-4 text-[#001145]">Alumni Relation</h3>
-                            <div className="space-y-2 text-sm text-[#4a5f7c]">
-                                <p><strong>Department:</strong> {profile.alumniRelation.department}</p>
-                                <p><strong>Faculty:</strong> {profile.alumniRelation.faculty}</p>
-                                <p><strong>University:</strong> {profile.alumniRelation.university}</p>
-                                <p><strong>Batch:</strong> {profile.alumniRelation.batch}</p>
-                            </div>
-                        </Card>
-
-                        {/* Interests */}
-                        <Card className="bg-[#e4f0ff] border-0">
-                            <h3 className="font-bold text-lg mb-4 text-[#001145]">Interests</h3>
-                            <div className="flex flex-wrap gap-2">
-                                {profile.interests.map((interest) => (
-                                    <span key={interest} className="px-3 py-1.5 rounded-full text-xs font-medium bg-white text-[#001145]">
-                                        {interest}
-                                    </span>
-                                ))}
-                            </div>
-                        </Card>
-                    </div>
-                </div>
-            )}
-
-            {activeTab === 'Experience' && (
-                <Card className="bg-[#e4f0ff] border-0">
-                    <h3 className="font-bold text-xl mb-6 text-[#001145]">Work Experience</h3>
-                    <div className="space-y-6">
-                        {profile.experiences.map((exp, idx) => (
-                            <div key={exp.id} className="flex gap-4 pb-6 border-b border-white/50 last:border-0 last:pb-0">
-                                <div className="relative">
-                                    <div className="w-14 h-14 rounded-xl bg-white flex items-center justify-center flex-shrink-0">
-                                        <Briefcase size={24} className="text-[#001145]" />
-                                    </div>
-                                    {idx < profile.experiences.length - 1 && (
-                                        <div className="absolute top-16 left-1/2 w-0.5 h-full -translate-x-1/2 bg-[#a8bdda]" />
-                                    )}
-                                </div>
-                                <div className="flex-1">
-                                    <div className="flex items-start justify-between">
-                                        <div>
-                                            <h4 className="font-bold text-lg text-[#001145]">{exp.role}</h4>
-                                            <p className="font-medium text-[#4a5f7c]">{exp.company}</p>
-                                        </div>
-                                        {exp.current && <Badge variant="success">Current</Badge>}
-                                    </div>
-                                    <p className="text-sm mt-1 flex items-center gap-2 text-[#7088aa]">
-                                        <Calendar size={14} /> {exp.startDate} - {exp.current ? 'Present' : exp.endDate}
-                                        {exp.location && <><MapPin size={14} className="ml-2" /> {exp.location}</>}
-                                    </p>
-                                    {exp.description && <p className="mt-3 leading-relaxed text-[#4a5f7c]">{exp.description}</p>}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </Card>
-            )}
-
-            {activeTab === 'Education' && (
-                <Card className="bg-[#e4f0ff] border-0">
-                    <h3 className="font-bold text-xl mb-6 text-[#001145]">Education</h3>
-                    <div className="space-y-6">
-                        {profile.education.map((edu) => (
-                            <div key={edu.id} className="flex gap-4 pb-6 border-b border-white/50 last:border-0 last:pb-0">
-                                <div className="w-14 h-14 rounded-xl bg-white flex items-center justify-center flex-shrink-0">
-                                    <GraduationCap size={24} className="text-[#001145]" />
-                                </div>
-                                <div>
-                                    <h4 className="font-bold text-lg text-[#001145]">{edu.degree} in {edu.field}</h4>
-                                    <p className="font-medium text-[#4a5f7c]">{edu.institution}</p>
-                                    <p className="text-sm mt-1 text-[#7088aa]">
-                                        {edu.startYear} - {edu.current ? 'Present' : edu.endYear}
-                                        {edu.grade && <span className="ml-4">• {edu.grade}</span>}
-                                    </p>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </Card>
-            )}
-
-            {activeTab === 'Skills' && (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <Card className="bg-[#e4f0ff] border-0">
-                        <h3 className="font-bold text-xl mb-4 text-[#001145]">Technical Skills</h3>
-                        <div className="flex flex-wrap gap-3">
-                            {profile.skills.map((skill) => (
-                                <span key={skill} className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-white text-[#001145] shadow-sm">
-                                    {skill}
-                                </span>
-                            ))}
-                        </div>
-                    </Card>
-                    <Card className="bg-[#e4f0ff] border-0">
-                        <h3 className="font-bold text-xl mb-4 text-[#001145]">Interests & Expertise</h3>
-                        <div className="flex flex-wrap gap-3">
-                            {profile.interests.map((interest) => (
-                                <span key={interest} className="px-5 py-2.5 rounded-xl text-sm font-semibold bg-white text-[#001145] border border-[#a8bdda]">
-                                    {interest}
-                                </span>
-                            ))}
-                        </div>
-                    </Card>
-                </div>
-            )}
-
-            {activeTab === 'Achievements' && (
-                <Card className="bg-[#e4f0ff] border-0">
-                    <h3 className="font-bold text-xl mb-6 text-[#001145]">Achievements & Recognitions</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {profile.achievements.map((ach) => (
-                            <div key={ach.id} className="p-5 rounded-xl bg-white">
-                                <div className="flex items-start gap-4">
-                                    <div className="w-12 h-12 rounded-xl bg-[#e4f0ff] flex items-center justify-center flex-shrink-0">
-                                        {ach.type === 'award' && <Award size={24} className="text-amber-500" />}
-                                        {ach.type === 'certification' && <Star size={24} className="text-green-500" />}
-                                        {ach.type === 'publication' && <GraduationCap size={24} className="text-indigo-500" />}
-                                        {ach.type === 'recognition' && <Users size={24} className="text-[#001145]" />}
-                                    </div>
-                                    <div>
-                                        <h4 className="font-bold text-[#001145]">{ach.title}</h4>
-                                        <p className="text-sm mt-1 text-[#4a5f7c]">{ach.description}</p>
-                                        <p className="text-xs mt-2 flex items-center gap-1 text-[#7088aa]">
-                                            <Calendar size={12} /> {ach.date}
+                                    <div className="mt-4 p-4 bg-white/60 backdrop-blur-sm rounded-xl border border-white/50 max-w-2xl">
+                                        <p className="text-lg font-medium text-[#001145]">
+                                            {profile.currentRole} <span className="text-[#001145]/60">at</span> {profile.currentCompany}
+                                        </p>
+                                        <p className="text-sm text-[#001145]/70 mt-1 italic">
+                                            "{profile.bio}"
                                         </p>
                                     </div>
                                 </div>
+                                <Link href="/profile/edit">
+                                    <button className="bg-white hover:bg-[#001145] hover:text-white text-[#001145] px-5 py-2 rounded-full font-bold text-sm transition-all shadow-sm border border-white/50 flex items-center gap-2">
+                                        <Edit size={16} /> Edit Profile
+                                    </button>
+                                </Link>
                             </div>
+
+                            {/* Stats / Quick Info */}
+                            <div className="mt-6 flex gap-8">
+                                <div>
+                                    <p className="text-xs uppercase font-bold text-[#001145]/50 tracking-wider">Location</p>
+                                    <p className="font-semibold text-[#001145] flex items-center gap-1"><MapPin size={14} /> {profile.location || 'N/A'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs uppercase font-bold text-[#001145]/50 tracking-wider">Email</p>
+                                    <p className="font-semibold text-[#001145] flex items-center gap-1"><Mail size={14} /> {profile.email}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs uppercase font-bold text-[#001145]/50 tracking-wider">Faculty</p>
+                                    <p className="font-semibold text-[#001145]">{profile.alumniRelation.faculty}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* Main Content Layout */}
+            <div className="flex flex-col lg:flex-row gap-6">
+
+                {/* Navigation Sidebar */}
+                <div className="lg:w-64 flex-shrink-0">
+                    <div className="bg-[#e4f0ff] p-2 rounded-2xl sticky top-6">
+                        {tabs.map((tab) => (
+                            <button
+                                key={tab}
+                                onClick={() => setActiveTab(tab)}
+                                className={`w-full text-left px-4 py-3 rounded-xl text-sm font-bold transition-all mb-1 last:mb-0 flex items-center justify-between group ${activeTab === tab
+                                        ? 'bg-white text-[#001145] shadow-sm'
+                                        : 'text-[#001145]/60 hover:bg-white/50 hover:text-[#001145]'
+                                    }`}
+                            >
+                                {tab}
+                                {activeTab === tab && <div className="w-1.5 h-1.5 rounded-full bg-[#001145]"></div>}
+                            </button>
                         ))}
                     </div>
-                </Card>
-            )}
+                </div>
 
-            {activeTab === 'Activity' && (
-                <Card className="bg-[#e4f0ff] border-0">
-                    <h3 className="font-bold text-xl mb-6 text-[#001145]">Activity Timeline</h3>
-                    <div className="space-y-4">
-                        {profile.activities.map((act, idx) => (
-                            <div key={act.id} className="flex gap-4">
-                                <div className="relative">
-                                    <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center">
-                                        {act.type === 'post' && <MessageCircle size={18} className="text-[#001145]" />}
-                                        {act.type === 'event' && <Calendar size={18} className="text-amber-500" />}
-                                        {act.type === 'connection' && <Users size={18} className="text-green-500" />}
-                                        {act.type === 'job' && <Briefcase size={18} className="text-indigo-500" />}
-                                        {act.type === 'achievement' && <Award size={18} className="text-red-500" />}
+                {/* Content Area */}
+                <div className="flex-1 min-w-0">
+                    <div className="bg-white rounded-3xl p-8 border border-[#e4f0ff] min-h-[500px]">
+
+                        {/* Animations would go here, simplified for now */}
+
+                        {activeTab === 'Overview' && (
+                            <div className="space-y-8">
+                                {/* Highlight Cards */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="bg-[#e4f0ff]/50 p-6 rounded-2xl border border-[#e4f0ff]">
+                                        <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center mb-4 text-[#001145] shadow-sm">
+                                            <Star size={20} fill="#001145" className="text-[#001145]" />
+                                        </div>
+                                        <h3 className="font-bold text-[#001145] text-lg">Areas of Interest</h3>
+                                        <div className="flex flex-wrap gap-2 mt-3">
+                                            {profile.interests.map(i => (
+                                                <span key={i} className="px-3 py-1 bg-white rounded-lg text-xs font-bold text-[#001145] border border-[#e4f0ff]">
+                                                    {i}
+                                                </span>
+                                            ))}
+                                        </div>
                                     </div>
-                                    {idx < profile.activities.length - 1 && (
-                                        <div className="absolute top-12 left-1/2 w-0.5 h-6 -translate-x-1/2 bg-white" />
-                                    )}
+
+                                    <div className="bg-[#e4f0ff]/50 p-6 rounded-2xl border border-[#e4f0ff]">
+                                        <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center mb-4 text-[#001145] shadow-sm">
+                                            <GraduationCap size={20} />
+                                        </div>
+                                        <h3 className="font-bold text-[#001145] text-lg">Education Highlight</h3>
+                                        <p className="mt-2 text-[#001145] font-medium">{profile.degree} in {profile.major}</p>
+                                        <p className="text-sm text-[#001145]/70">{profile.alumniRelation.university}</p>
+                                    </div>
                                 </div>
-                                <div className="flex-1 pb-4">
-                                    <p className="font-medium text-[#4a5f7c]">{act.description}</p>
-                                    <p className="text-xs mt-1 flex items-center gap-1 text-[#7088aa]">
-                                        <Clock size={12} /> {act.date}
+
+                                {/* About Section */}
+                                <div>
+                                    <h3 className="text-xl font-bold text-[#001145] mb-4">About Me</h3>
+                                    <p className="text-gray-600 leading-relaxed bg-[#f8fbff] p-6 rounded-2xl border border-[#e4f0ff]">
+                                        {profile.bio}
                                     </p>
                                 </div>
                             </div>
-                        ))}
+                        )}
+
+                        {activeTab === 'Experience' && (
+                            <div className="space-y-8 relative">
+                                <div className="absolute left-4 top-2 bottom-2 w-0.5 bg-[#e4f0ff]"></div>
+                                {profile.experiences.map((exp, idx) => (
+                                    <div key={exp.id} className="relative pl-12 group">
+                                        <div className="absolute left-0 top-0 w-8 h-8 rounded-full bg-white border-4 border-[#e4f0ff] flex items-center justify-center z-10 group-hover:border-[#001145] transition-colors">
+                                            <Briefcase size={12} className="text-[#001145]" />
+                                        </div>
+                                        <div className="bg-[#f8fbff] p-6 rounded-2xl border border-[#e4f0ff] hover:shadow-md transition-shadow">
+                                            <div className="flex justify-between items-start mb-2">
+                                                <div>
+                                                    <h3 className="font-bold text-xl text-[#001145]">{exp.role}</h3>
+                                                    <p className="font-medium text-[#001145]/80">{exp.company}</p>
+                                                </div>
+                                                {exp.current && <span className="bg-[#e4f0ff] text-[#001145] px-3 py-1 rounded-full text-xs font-bold">Current</span>}
+                                            </div>
+                                            <p className="text-sm text-[#001145]/50 mb-4 flex items-center gap-1 font-medium">
+                                                <Clock size={14} /> {exp.startDate} — {exp.current ? 'Present' : exp.endDate}
+                                            </p>
+                                            <p className="text-gray-600 leading-relaxed text-sm">{exp.description}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {activeTab === 'Education' && (
+                            <div className="grid gap-4">
+                                {profile.education.map((edu) => (
+                                    <div key={edu.id} className="flex gap-6 items-center bg-[#f8fbff] p-6 rounded-2xl border border-[#e4f0ff] hover:bg-[#e4f0ff]/30 transition-colors">
+                                        <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center text-[#001145] shadow-sm border border-[#e4f0ff] flex-shrink-0">
+                                            <GraduationCap size={32} />
+                                        </div>
+                                        <div>
+                                            <h3 className="font-bold text-xl text-[#001145]">{edu.degree} <span className="text-[#001145]/60 font-normal">in</span> {edu.field}</h3>
+                                            <p className="text-[#001145] font-medium mt-1">{edu.institution}</p>
+                                            <p className="text-sm text-[#001145]/50 mt-2 font-bold">{edu.startYear} - {edu.endYear}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {activeTab === 'Connections' && (
+                            <div className="flex flex-col items-center justify-center h-64 text-center">
+                                <div className="w-20 h-20 bg-[#e4f0ff] rounded-full flex items-center justify-center mb-4 animate-pulse">
+                                    <Users size={32} className="text-[#001145]" />
+                                </div>
+                                <h3 className="text-2xl font-bold text-[#001145]">My Network</h3>
+                                <p className="text-[#001145]/60 mt-2 mb-6">You have a growing network of alumni.</p>
+                                <Link href="/connections">
+                                    <Button>Manage Connections</Button>
+                                </Link>
+                            </div>
+                        )}
+
+                        {activeTab === 'Message' && (
+                            <div className="flex flex-col items-center justify-center h-64 text-center">
+                                <div className="w-20 h-20 bg-[#e4f0ff] rounded-full flex items-center justify-center mb-4">
+                                    <MessageCircle size={32} className="text-[#001145]" />
+                                </div>
+                                <h3 className="text-2xl font-bold text-[#001145]">Messages</h3>
+                                <p className="text-[#001145]/60 mt-2 mb-6">Check your inbox for new opportunities.</p>
+                                <Link href="/messages">
+                                    <Button>Go to Inbox</Button>
+                                </Link>
+                            </div>
+                        )}
+
+                        {activeTab === 'Activities' && (
+                            <div className="space-y-4">
+                                {profile.activities.map((act) => (
+                                    <div key={act.id} className="flex gap-4 items-center p-4 rounded-xl hover:bg-[#f8fbff] transition-colors border border-transparent hover:border-[#e4f0ff]">
+                                        <div className="w-10 h-10 rounded-full bg-[#e4f0ff] flex items-center justify-center flex-shrink-0">
+                                            <Activity size={16} className="text-[#001145]" />
+                                        </div>
+                                        <div>
+                                            <p className="font-medium text-[#001145]">{act.description}</p>
+                                            <p className="text-xs font-bold text-[#001145]/40 mt-1 uppercase tracking-wide">{act.date}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
                     </div>
-                </Card>
-            )}
+                </div>
+            </div>
         </div>
     );
 }
