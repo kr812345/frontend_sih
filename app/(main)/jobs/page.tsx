@@ -1,37 +1,64 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Briefcase, MapPin, Clock, Building2, Search, Filter, Plus, DollarSign } from 'lucide-react';
+import { Briefcase, MapPin, Clock, Building2, Search, Plus, DollarSign, ExternalLink } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { Button, Card, Badge, LoadingSpinner } from '@/components/ui';
+import { MOCK_JOBS } from '@/src/data/mockData';
 import { getAllJobs } from '@/src/api/jobs';
+
+interface Job {
+  _id: string;
+  id?: string;
+  title: string;
+  company: string;
+  location?: string;
+  type: 'full-time' | 'internship';
+  isOpen: boolean;
+  description?: string;
+  skillsRequired: string[];
+  salary?: string;
+  experienceLevel?: string;
+  deadline?: string;
+  postedBy?: string;
+  createdAt: string;
+}
 
 export default function JobsPage() {
   const router = useRouter();
-  const [jobs, setJobs] = useState<any[]>([]);
+  const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedJob, setSelectedJob] = useState<any | null>(null);
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [typeFilter, setTypeFilter] = useState('all');
 
   useEffect(() => {
     const fetchJobs = async () => {
       try {
         const response = await getAllJobs({ page: 1, limit: 50 });
-        const jobList = response.map((j: any) => ({
-          _id: j.id || j._id,
-          title: j.title,
-          company: j.company,
-          location: j.location,
-          type: j.type,
-          salary: j.salary || 'Competitive',
-          experience: j.experienceLevel || 'Not specified',
-          deadline: j.deadline ? new Date(j.deadline).toLocaleDateString() : 'Open',
-          description: j.description,
-          postedAt: new Date(j.postedAt || j.createdAt).toLocaleDateString(),
-          skills: j.skillsRequired || j.skills || [], // Handle both keys
-        }));
-        setJobs(jobList);
+        if (response && response.length > 0) {
+          const jobList = response.map((j: any) => ({
+            _id: j.id || j._id,
+            title: j.title,
+            company: j.company,
+            location: j.location,
+            type: j.type,
+            isOpen: j.isOpen ?? true,
+            salary: j.salary || 'Competitive',
+            experienceLevel: j.experienceLevel || 'Not specified',
+            deadline: j.deadline ? new Date(j.deadline).toLocaleDateString() : 'Open',
+            description: j.description,
+            createdAt: j.createdAt,
+            skillsRequired: j.skillsRequired || j.skills || [],
+          }));
+          setJobs(jobList);
+        } else {
+          setJobs(MOCK_JOBS);
+        }
       } catch (error) {
-        console.error('Error fetching jobs:', error);
+        console.log('Using mock jobs data');
+        setJobs(MOCK_JOBS);
       } finally {
         setLoading(false);
       }
@@ -39,10 +66,25 @@ export default function JobsPage() {
     fetchJobs();
   }, []);
 
-  const filteredJobs = jobs.filter(job => 
-    job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    job.company.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredJobs = jobs.filter(job => {
+    const matchesSearch = job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      job.company.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesType = typeFilter === 'all' || job.type === typeFilter;
+    return matchesSearch && matchesType;
+  });
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffDays = Math.ceil(Math.abs(now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString('en-IN', { month: 'short', day: 'numeric' });
+  };
+
+  if (loading) return <LoadingSpinner fullScreen text="Loading jobs..." />;
 
   return (
     <div className="space-y-6">
@@ -50,19 +92,15 @@ export default function JobsPage() {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-[#001145]">Job Board</h1>
-          <p className="text-gray-500">Find your next career opportunity</p>
+          <p className="text-gray-500">{jobs.length} open positions</p>
         </div>
-        <button 
-          onClick={() => router.push('/jobs/create')}
-          className="flex items-center gap-2 bg-[#001145] text-white px-6 py-3 rounded-full font-medium hover:bg-[#001339] transition-colors"
-        >
-          <Plus size={20} />
+        <Button onClick={() => router.push('/jobs/create')} leftIcon={<Plus size={20} />}>
           Post a Job
-        </button>
+        </Button>
       </div>
 
-      {/* Search Bar */}
-      <div className="flex gap-4">
+      {/* Search & Filters */}
+      <div className="flex flex-col md:flex-row gap-4">
         <div className="flex-1 relative">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
           <input
@@ -70,123 +108,150 @@ export default function JobsPage() {
             placeholder="Search jobs by title or company..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#001145]/20 focus:border-[#001145]"
+            className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#001145]/20 bg-white"
           />
         </div>
-        <button className="flex items-center gap-2 px-6 py-3 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors">
-          <Filter size={20} />
-          Filters
-        </button>
+        <div className="flex gap-2">
+          {['all', 'full-time', 'internship'].map((type) => (
+            <button
+              key={type}
+              onClick={() => setTypeFilter(type)}
+              className={`px-5 py-3 rounded-xl text-sm font-medium whitespace-nowrap transition-colors ${typeFilter === type
+                  ? 'bg-[#001145] text-white'
+                  : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                }`}
+            >
+              {type === 'all' ? 'All' : type === 'full-time' ? 'Full-time' : 'Internship'}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-4">
+        <Card className="bg-[#e4f0ff] border-0">
+          <p className="text-2xl font-bold text-[#001145]">{jobs.length}</p>
+          <p className="text-sm text-[#7088aa]">Total Jobs</p>
+        </Card>
+        <Card className="bg-[#e4f0ff] border-0">
+          <p className="text-2xl font-bold text-green-600">{jobs.filter(j => j.type === 'full-time').length}</p>
+          <p className="text-sm text-[#7088aa]">Full-time</p>
+        </Card>
+        <Card className="bg-[#e4f0ff] border-0">
+          <p className="text-2xl font-bold text-amber-600">{jobs.filter(j => j.type === 'internship').length}</p>
+          <p className="text-sm text-[#7088aa]">Internships</p>
+        </Card>
       </div>
 
       {/* Job Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Job List */}
-        <div className="space-y-4">
-          {loading ? (
-            <div className="text-center py-12">Loading...</div>
-          ) : filteredJobs.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">No jobs found</div>
-          ) : (
-            filteredJobs.map((job) => (
-              <div
+      {filteredJobs.length === 0 ? (
+        <Card className="text-center py-12 bg-[#e4f0ff] border-0">
+          <Briefcase className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+          <p className="text-gray-500">No jobs found</p>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Job List */}
+          <div className="space-y-4">
+            {filteredJobs.map((job) => (
+              <Card
                 key={job._id}
                 onClick={() => setSelectedJob(job)}
-                className={`bg-white p-6 rounded-2xl border cursor-pointer transition-all ${
-                  selectedJob?._id === job._id 
-                    ? 'border-[#001145] shadow-lg' 
-                    : 'border-gray-100 hover:border-gray-200 hover:shadow-md'
-                }`}
+                className={`cursor-pointer transition-all bg-[#e4f0ff] border-0 ${selectedJob?._id === job._id ? 'ring-2 ring-[#001145] shadow-lg' : 'hover:shadow-md'
+                  }`}
               >
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h3 className="text-xl font-bold text-[#001145]">{job.title}</h3>
-                    <div className="flex items-center gap-2 text-gray-600 mt-1">
-                      <Building2 size={16} />
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-lg font-bold text-[#001145] truncate">{job.title}</h3>
+                    <div className="flex items-center gap-2 mt-1 text-[#4a5f7c]">
+                      <Building2 size={14} />
                       <span>{job.company}</span>
                     </div>
                   </div>
-                  <span className="px-3 py-1 bg-green-100 text-green-700 text-sm rounded-full font-medium">
-                    {job.type}
-                  </span>
+                  <Badge size="sm" variant={job.type === 'full-time' ? 'success' : 'warning'}>
+                    {job.type === 'full-time' ? 'Full-time' : 'Internship'}
+                  </Badge>
                 </div>
-                
-                <div className="flex flex-wrap gap-4 text-sm text-gray-500 mb-4">
-                  <div className="flex items-center gap-1">
-                    <MapPin size={14} />
-                    {job.location}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <DollarSign size={14} />
-                    {job.salary}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Clock size={14} />
-                    {job.postedAt}
-                  </div>
+
+                <div className="flex flex-wrap gap-3 text-sm text-[#7088aa] mb-3">
+                  {job.location && <span className="flex items-center gap-1"><MapPin size={14} />{job.location}</span>}
+                  <span className="flex items-center gap-1"><DollarSign size={14} />{job.salary}</span>
+                  <span className="flex items-center gap-1"><Clock size={14} />{formatDate(job.createdAt)}</span>
                 </div>
 
                 <div className="flex flex-wrap gap-2">
-                  {job.skills.map((skill: string) => (
-                    <span key={skill} className="px-3 py-1 bg-[#e4f0ff] text-[#001145] text-xs rounded-full font-medium">
+                  {job.skillsRequired.slice(0, 3).map((skill: string) => (
+                    <span key={skill} className="px-3 py-1 rounded-full text-xs font-medium bg-white text-[#001145]">
                       {skill}
                     </span>
                   ))}
+                  {job.skillsRequired.length > 3 && (
+                    <span className="px-3 py-1 text-xs text-[#7088aa]">+{job.skillsRequired.length - 3}</span>
+                  )}
+                </div>
+              </Card>
+            ))}
+          </div>
+
+          {/* Job Details */}
+          <div className="hidden lg:block">
+            {selectedJob ? (
+              <Card className="bg-[#e4f0ff] border-0 sticky top-8">
+                <div className="mb-6">
+                  <h2 className="text-2xl font-bold text-[#001145] mb-2">{selectedJob.title}</h2>
+                  <p className="text-lg text-[#4a5f7c]">{selectedJob.company}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 mb-6">
+                  <div className="p-4 rounded-xl bg-white">
+                    <p className="text-sm text-[#7088aa] mb-1">Location</p>
+                    <p className="font-medium text-[#001145]">{selectedJob.location || 'Not specified'}</p>
+                  </div>
+                  <div className="p-4 rounded-xl bg-white">
+                    <p className="text-sm text-[#7088aa] mb-1">Salary</p>
+                    <p className="font-medium text-[#001145]">{selectedJob.salary}</p>
+                  </div>
+                  <div className="p-4 rounded-xl bg-white">
+                    <p className="text-sm text-[#7088aa] mb-1">Experience</p>
+                    <p className="font-medium text-[#001145]">{selectedJob.experienceLevel}</p>
+                  </div>
+                  <div className="p-4 rounded-xl bg-white">
+                    <p className="text-sm text-[#7088aa] mb-1">Deadline</p>
+                    <p className="font-medium text-[#001145]">{selectedJob.deadline}</p>
+                  </div>
+                </div>
+
+                <div className="mb-6">
+                  <h3 className="font-bold text-[#001145] mb-3">Description</h3>
+                  <p className="text-[#4a5f7c] leading-relaxed">{selectedJob.description}</p>
+                </div>
+
+                <div className="mb-8">
+                  <h3 className="font-bold text-[#001145] mb-3">Required Skills</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedJob.skillsRequired.map((skill: string) => (
+                      <span key={skill} className="px-4 py-2 rounded-full font-medium bg-white text-[#001145]">
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <Button className="w-full" size="lg" leftIcon={<ExternalLink size={18} />}>
+                  Apply Now
+                </Button>
+              </Card>
+            ) : (
+              <div className="rounded-2xl border-2 border-dashed border-gray-200 p-12 flex items-center justify-center h-full bg-[#e4f0ff]">
+                <div className="text-center">
+                  <Briefcase className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                  <p className="text-[#7088aa]">Select a job to view details</p>
                 </div>
               </div>
-            ))
-          )}
+            )}
+          </div>
         </div>
-
-        {/* Job Details */}
-        <div className="hidden lg:block">
-          {selectedJob ? (
-            <div className="bg-white p-8 rounded-2xl border border-gray-100 sticky top-8">
-              <h2 className="text-2xl font-bold text-[#001145] mb-2">{selectedJob.title}</h2>
-              <p className="text-lg text-gray-600 mb-6">{selectedJob.company}</p>
-              
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="bg-gray-50 p-4 rounded-xl">
-                  <p className="text-sm text-gray-500">Location</p>
-                  <p className="font-medium text-[#001145]">{selectedJob.location}</p>
-                </div>
-                <div className="bg-gray-50 p-4 rounded-xl">
-                  <p className="text-sm text-gray-500">Salary</p>
-                  <p className="font-medium text-[#001145]">{selectedJob.salary}</p>
-                </div>
-                <div className="bg-gray-50 p-4 rounded-xl">
-                  <p className="text-sm text-gray-500">Experience</p>
-                  <p className="font-medium text-[#001145]">{selectedJob.experience}</p>
-                </div>
-                <div className="bg-gray-50 p-4 rounded-xl">
-                  <p className="text-sm text-gray-500">Deadline</p>
-                  <p className="font-medium text-[#001145]">{selectedJob.deadline}</p>
-                </div>
-              </div>
-
-              <h3 className="font-bold text-[#001145] mb-3">Description</h3>
-              <p className="text-gray-600 mb-6">{selectedJob.description}</p>
-
-              <h3 className="font-bold text-[#001145] mb-3">Required Skills</h3>
-              <div className="flex flex-wrap gap-2 mb-8">
-                {selectedJob.skills.map((skill: string) => (
-                  <span key={skill} className="px-4 py-2 bg-[#e4f0ff] text-[#001145] rounded-full font-medium">
-                    {skill}
-                  </span>
-                ))}
-              </div>
-
-              {/* <button className="w-full bg-[#001145] text-white py-4 rounded-xl font-bold hover:bg-[#001339] transition-colors">
-                Apply Now
-              </button> */}
-            </div>
-          ) : (
-            <div className="bg-gray-50 p-12 rounded-2xl border border-dashed border-gray-300 flex items-center justify-center">
-              <p className="text-gray-500">Select a job to view details</p>
-            </div>
-          )}
-        </div>
-      </div>
+      )}
     </div>
   );
 }

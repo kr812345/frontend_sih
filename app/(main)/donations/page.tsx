@@ -1,162 +1,194 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Heart, Target, Trophy, GraduationCap, Building2, Users } from 'lucide-react';
+import Link from 'next/link';
+import { Heart, Calendar, DollarSign, ArrowRight, Download, Search, Filter } from 'lucide-react';
+import { Card, Badge, Button, LoadingSpinner } from '@/components/ui';
 
-const DONATION_CAUSES = [
+// Mock Donations Data
+const MOCK_DONATIONS = [
   {
-    _id: '1',
-    title: 'Student Scholarship Fund',
-    description: 'Help deserving students achieve their academic dreams with financial support.',
-    raised: 450000,
-    goal: 1000000,
-    donors: 234,
-    icon: GraduationCap,
-    color: 'bg-blue-500',
+    id: '1',
+    campaignId: '1',
+    campaignTitle: 'Scholarship Fund for Underprivileged Students',
+    amount: 25000,
+    date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
+    status: 'completed',
+    transactionId: 'TXN123456789',
   },
   {
-    _id: '2',
-    title: 'Infrastructure Development',
-    description: 'Contribute to building state-of-the-art facilities for future students.',
-    raised: 780000,
-    goal: 2000000,
-    donors: 156,
-    icon: Building2,
-    color: 'bg-green-500',
+    id: '2',
+    campaignId: '2',
+    campaignTitle: 'New Computer Lab for Engineering Department',
+    amount: 50000,
+    date: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
+    status: 'completed',
+    transactionId: 'TXN987654321',
   },
   {
-    _id: '3',
-    title: 'Research & Innovation',
-    description: 'Support groundbreaking research projects and innovation labs.',
-    raised: 320000,
-    goal: 500000,
-    donors: 89,
-    icon: Trophy,
-    color: 'bg-purple-500',
+    id: '3',
+    campaignId: '4',
+    campaignTitle: 'Sports Complex Renovation',
+    amount: 10000,
+    date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
+    status: 'completed',
+    transactionId: 'TXN456789123',
+  },
+  {
+    id: '4',
+    campaignId: '5',
+    campaignTitle: 'Community Outreach Program',
+    amount: 15000,
+    date: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
+    status: 'completed',
+    transactionId: 'TXN789123456',
+  },
+  {
+    id: '5',
+    campaignId: '3',
+    campaignTitle: 'AI Research Center Development',
+    amount: 100000,
+    date: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
+    status: 'completed',
+    transactionId: 'TXN321654987',
   },
 ];
 
-const DONATION_AMOUNTS = [1000, 5000, 10000, 25000, 50000];
-
 export default function DonationsPage() {
-  const [selectedCause, setSelectedCause] = useState<string | null>(null);
-  const [amount, setAmount] = useState<number>(5000);
-  const [customAmount, setCustomAmount] = useState('');
+  const [donations] = useState(MOCK_DONATIONS);
+  const [searchTerm, setSearchTerm] = useState('');
 
-  const formatCurrency = (num: number) => {
-    return new Intl.NumberFormat('en-IN', { 
-      style: 'currency', 
-      currency: 'INR',
-      maximumFractionDigits: 0 
-    }).format(num);
+  const totalDonated = donations.reduce((sum, d) => sum + d.amount, 0);
+  const campaignsSupported = new Set(donations.map(d => d.campaignId)).size;
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
   };
 
+  const filteredDonations = donations.filter(d =>
+    d.campaignTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    d.transactionId.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="text-center max-w-2xl mx-auto">
-        <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-          <Heart className="w-8 h-8 text-red-500" />
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-[#001145]">My Donations</h1>
+          <p className="text-gray-500">Track your contributions and impact</p>
         </div>
-        <h1 className="text-3xl font-bold text-[#001145] mb-3">Give Back to Your Alma Mater</h1>
-        <p className="text-gray-500">Your contribution helps shape the future of education and empowers the next generation of leaders.</p>
+        <Link href="/campaigns">
+          <Button leftIcon={<Heart size={18} />}>Donate Now</Button>
+        </Link>
       </div>
 
-      {/* Causes */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {DONATION_CAUSES.map((cause) => {
-          const progress = (cause.raised / cause.goal) * 100;
-          
-          return (
-            <div 
-              key={cause._id}
-              onClick={() => setSelectedCause(cause._id)}
-              className={`bg-white rounded-2xl p-6 border-2 cursor-pointer transition-all ${
-                selectedCause === cause._id 
-                  ? 'border-[#001145] shadow-lg' 
-                  : 'border-gray-100 hover:border-gray-200 hover:shadow-md'
-              }`}
-            >
-              <div className={`w-12 h-12 ${cause.color} rounded-xl flex items-center justify-center mb-4`}>
-                <cause.icon className="w-6 h-6 text-white" />
-              </div>
-
-              <h3 className="text-xl font-bold text-[#001145] mb-2">{cause.title}</h3>
-              <p className="text-gray-500 text-sm mb-6">{cause.description}</p>
-
-              {/* Progress */}
-              <div className="mb-4">
-                <div className="flex justify-between text-sm mb-2">
-                  <span className="font-bold text-[#001145]">{formatCurrency(cause.raised)}</span>
-                  <span className="text-gray-400">of {formatCurrency(cause.goal)}</span>
-                </div>
-                <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                  <div 
-                    className={`h-full ${cause.color} rounded-full transition-all`}
-                    style={{ width: `${progress}%` }}
-                  ></div>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 text-gray-500 text-sm">
-                <Users size={14} />
-                <span>{cause.donors} donors</span>
-              </div>
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="bg-[#e4f0ff] border-0">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center">
+              <DollarSign className="text-green-500" size={24} />
             </div>
-          );
-        })}
+            <div>
+              <p className="text-sm text-[#7088aa]">Total Donated</p>
+              <p className="text-2xl font-bold text-[#001145]">₹{(totalDonated / 1000).toFixed(0)}K</p>
+            </div>
+          </div>
+        </Card>
+        <Card className="bg-[#e4f0ff] border-0">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center">
+              <Heart className="text-red-500" size={24} />
+            </div>
+            <div>
+              <p className="text-sm text-[#7088aa]">Campaigns Supported</p>
+              <p className="text-2xl font-bold text-[#001145]">{campaignsSupported}</p>
+            </div>
+          </div>
+        </Card>
+        <Card className="bg-[#e4f0ff] border-0">
+          <div className="flex items-center gap-4">
+            <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center">
+              <Calendar className="text-blue-500" size={24} />
+            </div>
+            <div>
+              <p className="text-sm text-[#7088aa]">Total Donations</p>
+              <p className="text-2xl font-bold text-[#001145]">{donations.length}</p>
+            </div>
+          </div>
+        </Card>
       </div>
 
-      {/* Donation Form */}
-      {selectedCause && (
-        <div className="max-w-lg mx-auto bg-white rounded-2xl p-8 border border-gray-100">
-          <h2 className="text-xl font-bold text-[#001145] mb-6 text-center">Select Amount</h2>
-          
-          <div className="grid grid-cols-3 gap-3 mb-6">
-            {DONATION_AMOUNTS.map((amt) => (
-              <button
-                key={amt}
-                onClick={() => {
-                  setAmount(amt);
-                  setCustomAmount('');
-                }}
-                className={`py-3 rounded-xl font-medium transition-colors ${
-                  amount === amt && !customAmount
-                    ? 'bg-[#001145] text-white' 
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                }`}
-              >
-                {formatCurrency(amt)}
-              </button>
+      {/* Search */}
+      <div className="relative">
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+        <input
+          type="text"
+          placeholder="Search by campaign or transaction ID..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full pl-12 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#001145]/20 bg-white"
+        />
+      </div>
+
+      {/* Donations List */}
+      <Card className="bg-[#e4f0ff] border-0">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="font-bold text-lg text-[#001145]">Donation History</h2>
+          <Button variant="outline" size="sm" leftIcon={<Download size={16} />}>
+            Export
+          </Button>
+        </div>
+
+        {filteredDonations.length === 0 ? (
+          <div className="text-center py-12">
+            <Heart className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-500">No donations found</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {filteredDonations.map((donation) => (
+              <div key={donation.id} className="p-4 bg-white rounded-xl">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <Link href={`/campaigns/${donation.campaignId}`}>
+                      <h3 className="font-bold text-[#001145] hover:underline line-clamp-1">
+                        {donation.campaignTitle}
+                      </h3>
+                    </Link>
+                    <div className="flex items-center gap-4 mt-2 text-sm text-[#7088aa]">
+                      <span className="flex items-center gap-1">
+                        <Calendar size={14} /> {formatDate(donation.date)}
+                      </span>
+                      <span className="font-mono text-xs">{donation.transactionId}</span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xl font-bold text-green-600">₹{donation.amount.toLocaleString()}</p>
+                    <Badge variant="success" size="sm" className="mt-1">Completed</Badge>
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
+        )}
+      </Card>
 
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-600 mb-2">Or enter custom amount</label>
-            <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">₹</span>
-              <input
-                type="number"
-                placeholder="Enter amount"
-                value={customAmount}
-                onChange={(e) => {
-                  setCustomAmount(e.target.value);
-                  setAmount(0);
-                }}
-                className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#001145]/20 focus:border-[#001145]"
-              />
-            </div>
-          </div>
-
-          <button className="w-full bg-[#001145] text-white py-4 rounded-xl font-bold hover:bg-[#001339] transition-colors">
-            Donate {formatCurrency(customAmount ? parseInt(customAmount) : amount)}
-          </button>
-
-          <p className="text-center text-xs text-gray-400 mt-4">
-            Your donation is tax-deductible under Section 80G
-          </p>
-        </div>
-      )}
+      {/* Impact Section */}
+      <Card className="bg-[#e4f0ff] border-0">
+        <h2 className="font-bold text-lg text-[#001145] mb-4">Your Impact</h2>
+        <p className="text-[#4a5f7c] mb-4">
+          Your generous contributions have helped {campaignsSupported} different initiatives across education,
+          infrastructure, research, sports, and community development. Thank you for making a difference!
+        </p>
+        <Link href="/campaigns">
+          <Button variant="secondary" rightIcon={<ArrowRight size={16} />}>
+            Explore More Campaigns
+          </Button>
+        </Link>
+      </Card>
     </div>
   );
 }

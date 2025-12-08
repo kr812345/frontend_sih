@@ -96,9 +96,8 @@ export default function SuccessStoriesPage() {
           <button
             key={cat}
             onClick={() => setFilter(cat)}
-            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-              filter === cat ? 'bg-[#001145] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
+            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${filter === cat ? 'bg-[#001145] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
           >
             {cat === 'all' ? 'All Stories' : cat}
           </button>
@@ -141,12 +140,23 @@ export default function SuccessStoriesPage() {
       </div>
 
       {/* CTA */}
-      <Card className="bg-gradient-to-r from-[#001145] to-[#001339] text-white text-center">
-        <h3 className="text-2xl font-bold mb-2">Have a Story to Share?</h3>
-        <p className="text-blue-200 mb-6">Inspire fellow alumni with your journey and achievements</p>
-        <Link href="/success-stories/submit">
-          <Button variant="secondary">Share Your Story</Button>
-        </Link>
+      <Card className=" text-white text-center">
+        <div className="rounded-2xl p-8 text-center border border-[#e4f0ff] shadow-sm" style={{ backgroundColor: '#f6faff' }}>
+          <h3 className="text-2xl font-bold mb-2" style={{ color: '#001145' }}>
+            Have a Story to Share?
+          </h3>
+          <p className="mb-6" style={{ color: '#4a5f7c' }}>
+            Inspire fellow alumni with your journey and achievements
+          </p>
+          <Link href="/success-stories/submit">
+            <Button
+              className="px-6 py-2 text-white font-medium transition-colors hover:opacity-90"
+              style={{ backgroundColor: '#001145' }}
+            >
+              Share Your Story
+            </Button>
+          </Link>
+        </div>
       </Card>
     </div>
   );

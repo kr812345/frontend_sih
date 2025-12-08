@@ -5,11 +5,18 @@
   --background-start-rgb: 214, 219, 220;
   --background-end-rgb: 255, 255, 255;
   --admin-nav-bg: #030e29;
+  /* Sarthak Color Palette */
   --primary-color: #001145;
-  --primary-light: #001339;
-  --accent-color: #a5bcdc;
+  --primary-dark: #001439;
+  --tertiary: #4a5f7c;
+  --accent: #7088aa;
+  --light-accent: #a8bdda;
+  --light-bg: #f6faff;
   --card-bg: #e4f0ff;
   --card-border: #dbeaff;
+  /* Legacy aliases */
+  --primary-light: #001439;
+  --accent-color: #a8bdda;
 }
 
 /* Dark mode support temporarily disabled to ensure consistency */
