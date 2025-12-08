@@ -13,10 +13,12 @@ const navItems = [
   { name: "Messages", href: "/messages" },
   { name: "Jobs", href: "/jobs" },
   { name: "Events", href: "/events" },
-  { name: "Campaigns", href: "/campaigns" },
-  { name: "Stories", href: "/success-stories" },
-  { name: "AI Chatbot", href: "/chatbot" },
+  { name: "Mentorship", href: "/mentorship" },
+  { name: "Communities", href: "/communities" },
+  { name: "Give Back", href: "/give-back" },
+  { name: "Memories", href: "/memories" },
 ];
+
 
 export default function Navbar() {
   const router = useRouter();
