@@ -3,6 +3,7 @@ import Script from "next/script";
 import { Toaster } from "react-hot-toast";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { SocketProvider } from "@/lib/socket-provider";
+import { TextToSpeech } from "@/components/TextToSpeech";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -22,6 +23,7 @@ export default function RootLayout({
           <SocketProvider>
             <Toaster />
             {children}
+            <TextToSpeech />
           </SocketProvider>
         </ErrorBoundary>
         <Script
