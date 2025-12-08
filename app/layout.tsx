@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Script from "next/script";
 import { Toaster } from "react-hot-toast";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { SocketProvider } from "@/lib/socket-provider";
@@ -23,6 +24,12 @@ export default function RootLayout({
             {children}
           </SocketProvider>
         </ErrorBoundary>
+        <Script
+          src="https://cdn.userway.org/widget.js"
+          data-account="YkkfhZBzXo"
+          data-color="#001245"
+          strategy="afterInteractive"
+        />
       </body>
     </html>
   );
