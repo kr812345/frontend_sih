@@ -6,6 +6,8 @@ import Image from 'next/image';
 import { Linkedin, Github, Twitter, Globe, Mail, Edit, MapPin, Briefcase, GraduationCap, Users, MessageCircle, Activity, Star, Clock } from 'lucide-react';
 import { Button, LoadingSpinner, Badge } from '@/components/ui';
 import { MY_PROFILE, AlumniProfileComplete } from '@/src/data/mockData';
+import { verifyAlumni } from '@/src/api/auth';
+import { walletApi } from '@/src/api/wallet';
 
 export default function MyProfilePage() {
     const [profile, setProfile] = useState<AlumniProfileComplete | null>(null);
@@ -15,10 +17,33 @@ export default function MyProfilePage() {
     const tabs = ['Overview', 'Experience', 'Education', 'Connections', 'Message', 'Activities'];
 
     useEffect(() => {
-        setTimeout(() => {
-            setProfile(MY_PROFILE);
-            setLoading(false);
-        }, 300);
+        const fetchProfileData = async () => {
+            // Start with mock data
+            let currentProfile = {...MY_PROFILE};
+            
+            try {
+                // Fetch real user ID to get real wallet balance
+                const user = await verifyAlumni();
+                if (user && user._id) {
+                    try {
+                        const balanceData = await walletApi.getBalance(user._id);
+                        if (balanceData) {
+                            currentProfile.karmaPoints = balanceData.balance;
+                        }
+                    } catch (err) {
+                        console.error("Failed to fetch wallet balance:", err);
+                        // fallback to default already in mock
+                    }
+                }
+            } catch (error) {
+                console.error("Error fetching profile data:", error);
+            } finally {
+                setProfile(currentProfile);
+                setLoading(false);
+            }
+        };
+
+        fetchProfileData();
     }, []);
 
     if (loading || !profile) return <LoadingSpinner fullScreen text="Loading profile..." />;

@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import { Save, ArrowLeft, Plus, Trash2, Camera, Check, AlertCircle } from 'lucide-react';
 import { Button, Card, LoadingSpinner } from '@/components/ui';
+import { walletApi } from '@/src/api/wallet';
+import { showSuccess, showError } from '@/src/lib/toast';
 import { MY_PROFILE, AlumniProfileComplete, Achievement } from '@/src/data/mockData';
 
 // Sarthak Light Theme Colors
@@ -99,6 +101,31 @@ export default function EditProfilePage() {
     setSaving(true);
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Reward for updating social links
+    if (activeSection === 'social') {
+      try {
+        // Rewarding 20 coins for updating social profile
+        if (profile.id) {
+          await walletApi.rewardCoin(profile.id, 20, 'Updated social profile');
+          showSuccess('Profile updated! You earned 20 coins 🎉');
+        } else {
+           showSuccess('Profile updated successfully!');
+        }
+      } catch (error) {
+        console.error('Error rewarding coins:', error);
+        showSuccess('Profile updated successfully!');
+      }
+    } else {
+        // Only show success for other sections (no reward) or if reward failed silently
+        // But wait, the reward block above handles success message for social.
+        // We need to handle non-social updates.
+    }
+    
+    if (activeSection !== 'social') {
+        showSuccess('Profile updated successfully!');
+    }
+
     setSaving(false);
     setSaved(true);
 

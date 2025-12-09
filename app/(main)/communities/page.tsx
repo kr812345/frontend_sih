@@ -5,6 +5,7 @@ import Image from 'next/image';
 import { Users, Search, MessageSquare, Image as ImageIcon, Bell, Plus, Heart, MessageCircle, Share2, MoreHorizontal, Calendar, Send } from 'lucide-react';
 import { Button, Card, Badge, LoadingSpinner } from '@/components/ui';
 import { getAllPosts, createPost, likePost, unlikePost, type Post } from '../../../src/api/posts';
+import { walletApi } from '../../../src/api/wallet';
 import { showSuccess, showError, showLoading, dismissToast } from '../../../src/lib/toast';
 import { Toaster } from 'react-hot-toast';
 
@@ -112,9 +113,23 @@ export default function CommunitiesPage() {
     try {
       const createdPost = await createPost(newPost);
       setPosts([createdPost, ...posts]);
+      
+      // Reward user for creating a post
+      if (createdPost.author?._id) {
+        try {
+          await walletApi.rewardCoin(createdPost.author._id, 10, 'Created a community post');
+          showSuccess('Post created! You earned 10 coins 🎉');
+        } catch (rewardError) {
+          console.error('Error rewarding coins:', rewardError);
+          // Don't fail the whole action if reward fails, just show the post success
+          showSuccess('Post created successfully!');
+        }
+      } else {
+        showSuccess('Post created successfully!');
+      }
+
       setNewPost('');
       dismissToast(toastId);
-      showSuccess('Post created successfully!');
     } catch (error) {
       dismissToast(toastId);
       showError('Failed to create post. Please try again.');

@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 import { Search, Filter, MessageSquare, UserPlus, Check } from 'lucide-react';
 import { LoadingSpinner } from '@/components/ui';
 import { getAvailableMentors, requestMentorship, type Mentor } from '../../../src/api/mentorship';
+import { verifyAlumni } from '../../../src/api/auth';
+import { walletApi } from '../../../src/api/wallet';
 import { showSuccess, showError, showLoading, dismissToast } from '../../../src/lib/toast';
 import { Toaster } from 'react-hot-toast';
 
@@ -369,7 +371,37 @@ export default function MentorshipPage() {
             <p className="text-gray-500 text-sm">Share your experience and help fellow alumni grow in their careers</p>
           </div>
 
-          <form className="space-y-5">
+          <form className="space-y-6" onSubmit={async (e) => {
+            e.preventDefault();
+            const toastId = showLoading('Submitting application...');
+            
+            try {
+              // Simulate API call
+              await new Promise(resolve => setTimeout(resolve, 1500));
+              
+              const user = await verifyAlumni();
+              if (user && user._id) {
+                 try {
+                    await walletApi.rewardCoin(user._id, 50, 'Registered as a Mentor');
+                    dismissToast(toastId);
+                    showSuccess('Application submitted! You earned 50 coins 🎉');
+                 } catch (rewardError) {
+                    console.error('Reward error:', rewardError);
+                    dismissToast(toastId);
+                    showSuccess('Application submitted successfully!');
+                 }
+              } else {
+                 dismissToast(toastId);
+                 showSuccess('Application submitted successfully!');
+              }
+              
+              // Reset form or redirect if needed
+              // setActiveTab('find'); 
+            } catch (error) {
+              dismissToast(toastId);
+              showError('Failed to submit application. Please try again.');
+            }
+          }}>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Areas of Expertise</label>
               <input
