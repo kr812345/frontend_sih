@@ -1,9 +1,12 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { Users, Search, MessageSquare, Image as ImageIcon, Bell, Plus, Heart, MessageCircle, Share2, MoreHorizontal, Calendar, Send } from 'lucide-react';
-import { Button, Card, Badge } from '@/components/ui';
+import { Button, Card, Badge, LoadingSpinner } from '@/components/ui';
+import { getAllPosts, createPost, likePost, unlikePost, type Post } from '../../../src/api/posts';
+import { showSuccess, showError, showLoading, dismissToast } from '../../../src/lib/toast';
+import { Toaster } from 'react-hot-toast';
 
 // Mock data for batch communities
 const MOCK_BATCHES = [
@@ -56,16 +59,104 @@ const MOCK_MEMORIES = [
 
 export default function CommunitiesPage() {
   const [batches] = useState(MOCK_BATCHES);
-  const [posts] = useState(MOCK_POSTS);
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
   const [selectedBatch, setSelectedBatch] = useState('2024');
   const [activeTab, setActiveTab] = useState<'feed' | 'members' | 'memories'>('feed');
   const [newPost, setNewPost] = useState('');
+  const [creatingPost, setCreatingPost] = useState(false);
+  const [likingPost, setLikingPost] = useState<string | null>(null);
+
+  // Fetch posts from API
+  useEffect(() => {
+    const fetchPosts = async () => {
+      try {
+        setLoading(true);
+        const data = await getAllPosts();
+        if (data && data.items) {
+          setPosts(data.items);
+        } else if (Array.isArray(data)) {
+           // @ts-ignore
+          setPosts(data);
+        } else {
+          setPosts(MOCK_POSTS as any);
+        }
+      } catch (error) {
+        showError('Failed to load posts. Please try again.');
+        console.error('Error fetching posts:', error);
+        // Fallback to mock data if API fails
+        setPosts(MOCK_POSTS as any);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (activeTab === 'feed') {
+      fetchPosts();
+    }
+  }, [activeTab]);
 
   const myBatch = batches.find(b => b.year === selectedBatch);
   const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').toUpperCase();
 
+  // Handle create post
+  const handleCreatePost = async () => {
+    if (!newPost.trim()) {
+      showError('Please enter some content for your post.');
+      return;
+    }
+
+    const toastId = showLoading('Creating post...');
+    setCreatingPost(true);
+
+    try {
+      const createdPost = await createPost(newPost);
+      setPosts([createdPost, ...posts]);
+      setNewPost('');
+      dismissToast(toastId);
+      showSuccess('Post created successfully!');
+    } catch (error) {
+      dismissToast(toastId);
+      showError('Failed to create post. Please try again.');
+      console.error('Error creating post:', error);
+    } finally {
+      setCreatingPost(false);
+    }
+  };
+
+  // Handle like/unlike post
+  const handleLikePost = async (postId: string, isLiked: boolean) => {
+    setLikingPost(postId);
+
+    try {
+      if (isLiked) {
+        await unlikePost(postId);
+      } else {
+        await likePost(postId);
+      }
+
+      // Update posts state
+      setPosts(posts.map(post => {
+        if (post._id === postId) {
+          return {
+            ...post,
+            likes: isLiked ? post.likes - 1 : post.likes + 1,
+            isLiked: !isLiked
+          };
+        }
+        return post;
+      }));
+    } catch (error) {
+      showError('Failed to update like. Please try again.');
+      console.error('Error liking/unliking post:', error);
+    } finally {
+      setLikingPost(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
+      <Toaster />
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
@@ -170,16 +261,28 @@ export default function CommunitiesPage() {
                           <Calendar size={16} /> Event
                         </button>
                       </div>
-                      <Button size="sm" leftIcon={<Send size={14} />}>Post</Button>
+                      <Button 
+                        size="sm" 
+                        leftIcon={<Send size={14} />}
+                        onClick={handleCreatePost}
+                        disabled={creatingPost || !newPost.trim()}
+                      >
+                        {creatingPost ? 'Posting...' : 'Post'}
+                      </Button>
                     </div>
                   </div>
                 </div>
               </Card>
 
               {/* Posts Feed */}
-              <div className="space-y-4">
-                {posts.map((post) => (
-                  <Card key={post.id} className="bg-white hover:shadow-md transition-shadow">
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <LoadingSpinner size="lg" />
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {posts.map((post) => (
+                    <Card key={post._id} className="bg-white hover:shadow-md transition-shadow">
                     {/* Post Header */}
                     <div className="flex items-start justify-between mb-4">
                       <div className="flex items-center gap-3">
@@ -188,7 +291,7 @@ export default function CommunitiesPage() {
                         </div>
                         <div>
                           <h4 className="font-bold text-[#001145]">{post.author.name}</h4>
-                          <p className="text-sm text-gray-500">Batch {post.author.gradYear} • {post.timestamp}</p>
+                          <p className="text-sm text-gray-500">{post.author.title || 'Alumni'} • {new Date(post.createdAt).toLocaleDateString()}</p>
                         </div>
                       </div>
                       <button className="p-2 rounded-lg hover:bg-gray-100">
@@ -201,7 +304,13 @@ export default function CommunitiesPage() {
 
                     {/* Post Actions */}
                     <div className="flex items-center gap-6 pt-4 border-t border-gray-100">
-                      <button className={`flex items-center gap-2 text-sm font-medium transition-colors ${post.isLiked ? 'text-red-500' : 'text-gray-500 hover:text-red-500'}`}>
+                      <button 
+                        onClick={() => handleLikePost(post._id, post.isLiked || false)}
+                        disabled={likingPost === post._id}
+                        className={`flex items-center gap-2 text-sm font-medium transition-colors disabled:opacity-50 ${
+                          post.isLiked ? 'text-red-500' : 'text-gray-500 hover:text-red-500'
+                        }`}
+                      >
                         <Heart size={18} fill={post.isLiked ? 'currentColor' : 'none'} /> {post.likes}
                       </button>
                       <button className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-[#001145] transition-colors">
@@ -211,9 +320,10 @@ export default function CommunitiesPage() {
                         <Share2 size={18} /> Share
                       </button>
                     </div>
-                  </Card>
-                ))}
-              </div>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </>
           )}
 

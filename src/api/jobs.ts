@@ -113,8 +113,8 @@ export const closeJobApplications = async (id: string): Promise<void> => {
 // These return empty/stub data to prevent frontend crashes
 
 export const applyToJob = async (id: string, data: CreateApplicationData): Promise<JobApplication | null> => {
-  console.warn('applyToJob: /jobs/:id/apply endpoint not implemented in backend');
-  return null;
+  const response = await apiClient.post<{ success: boolean; data: { application: JobApplication } }>(`/jobs/${id}/apply`, data);
+  return response.data.data.application;
 };
 
 export const bookmarkJob = async (id: string): Promise<void> => {
@@ -122,25 +122,25 @@ export const bookmarkJob = async (id: string): Promise<void> => {
 };
 
 export const getMyJobPostings = async (): Promise<Job[]> => {
-  console.warn('getMyJobPostings: /jobs/my/posted endpoint not implemented in backend');
-  return [];
+  const response = await apiClient.get<{ success: boolean; data: { jobs: Job[] } }>('/jobs/my/posted');
+  return response.data.data.jobs || [];
 };
 
 export const getMyApplications = async (): Promise<JobApplication[]> => {
-  console.warn('getMyApplications: /jobs/my/applications endpoint not implemented in backend');
-  return [];
+  const response = await apiClient.get<{ success: boolean; data: { applications: JobApplication[] } }>('/jobs/my/applications');
+  return response.data.data.applications || [];
 };
 
 export const getJobApplications = async (jobId: string): Promise<JobApplication[]> => {
-  console.warn('getJobApplications: /jobs/:id/applications endpoint not implemented in backend');
-  return [];
+  const response = await apiClient.get<{ success: boolean; data: { applications: JobApplication[] } }>(`/jobs/${jobId}/applications`);
+  return response.data.data.applications || [];
 };
 
 export const updateApplicationStatus = async (
   applicationId: string, 
   status: JobApplication['status']
 ): Promise<JobApplication | null> => {
-  console.warn('updateApplicationStatus: /applications/:id endpoint not implemented in backend');
-  return null;
+  const response = await apiClient.put<{ success: boolean; data: { application: JobApplication } }>(`/jobs/applications/${applicationId}`, { status });
+  return response.data.data.application;
 };
 

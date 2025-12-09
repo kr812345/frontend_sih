@@ -1,9 +1,13 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { Users, Search, Filter, Briefcase, GraduationCap, Clock, Star, MessageSquare, UserPlus, Check, MapPin, Target, Heart, Award } from 'lucide-react';
 import { Button, Card, Badge, LoadingSpinner } from '@/components/ui';
+import { getAvailableMentors, requestMentorship, type Mentor } from '../../../src/api/mentorship';
+import { showSuccess, showError, showLoading, dismissToast } from '../../../src/lib/toast';
+import { Toaster } from 'react-hot-toast';
 
 // Mock Mentors Data
 const MOCK_MENTORS = [
@@ -108,22 +112,70 @@ const MOCK_MENTORS = [
 const EXPERTISE_AREAS = ['All Areas', 'Tech', 'Product', 'Entrepreneurship', 'Data Science', 'Finance', 'Design'];
 
 export default function MentorshipPage() {
-  const [mentors] = useState(MOCK_MENTORS);
+  const router = useRouter();
+  const [mentors, setMentors] = useState<Mentor[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [expertiseFilter, setExpertiseFilter] = useState('All Areas');
   const [showFilters, setShowFilters] = useState(false);
   const [activeTab, setActiveTab] = useState<'find' | 'become'>('find');
+  const [requestingMentorship, setRequestingMentorship] = useState<string | null>(null);
+
+  // Fetch mentors from API
+  useEffect(() => {
+    const fetchMentors = async () => {
+      try {
+        setLoading(true);
+        const data = await getAvailableMentors();
+        setMentors(data);
+      } catch (error) {
+        showError('Failed to load mentors. Please try again.');
+        console.error('Error fetching mentors:', error);
+        // Fallback to mock data if API fails
+        setMentors(MOCK_MENTORS as any);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (activeTab === 'find') {
+      fetchMentors();
+    }
+  }, [activeTab]);
+
+  // Handle mentorship request
+  const handleRequestMentorship = async (mentorId: string) => {
+    const toastId = showLoading('Sending mentorship request...');
+    setRequestingMentorship(mentorId);
+    
+    try {
+      await requestMentorship({ mentorId });
+      dismissToast(toastId);
+      showSuccess('Mentorship request sent successfully!');
+    } catch (error) {
+      dismissToast(toastId);
+      showError('Failed to send mentorship request. Please try again.');
+      console.error('Error requesting mentorship:', error);
+    } finally {
+      setRequestingMentorship(null);
+    }
+  };
+
+  // Handle message button click
+  const handleMessage = (mentorId: string) => {
+    router.push(`/messages?userId=${mentorId}`);
+  };
 
   const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').toUpperCase();
 
   const filteredMentors = mentors.filter(mentor => {
     const matchesSearch = 
       mentor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      mentor.expertise.some(e => e.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      mentor.currentCompany.toLowerCase().includes(searchTerm.toLowerCase());
+      (mentor.profileDetails?.skills?.some(s => s.toLowerCase().includes(searchTerm.toLowerCase())) ?? false) ||
+      (mentor.profileDetails?.company?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
     
     const matchesExpertise = expertiseFilter === 'All Areas' || 
-      mentor.expertise.some(e => e.toLowerCase().includes(expertiseFilter.toLowerCase()));
+      (mentor.profileDetails?.skills?.some(s => s.toLowerCase().includes(expertiseFilter.toLowerCase())) ?? false);
     
     return matchesSearch && matchesExpertise;
   });
@@ -137,6 +189,7 @@ export default function MentorshipPage() {
 
   return (
     <div className="space-y-6">
+      <Toaster />
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
@@ -260,8 +313,12 @@ export default function MentorshipPage() {
 
           {/* Mentors Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredMentors.map((mentor) => (
-              <Card key={mentor.id} className="bg-[#e4f0ff] border-0 hover:shadow-lg transition-shadow">
+            {loading ? (
+              <div className="col-span-full flex items-center justify-center py-12">
+                <LoadingSpinner size="lg" />
+              </div>
+            ) : filteredMentors.map((mentor) => (
+              <Card key={mentor._id || (mentor as any).id} className="bg-[#e4f0ff] border-0 hover:shadow-lg transition-shadow">
                 {/* Header */}
                 <div className="flex items-start gap-4 mb-4">
                   <div className="w-16 h-16 rounded-2xl overflow-hidden bg-white flex-shrink-0">
@@ -276,53 +333,64 @@ export default function MentorshipPage() {
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <h3 className="font-bold text-lg text-[#001145] truncate">{mentor.name}</h3>
-                      {getAvailabilityBadge(mentor.availability)}
+                      <Badge variant="success" size="sm">Available</Badge>
                     </div>
-                    <p className="text-[#4a5f7c] truncate">{mentor.currentRole}</p>
-                    <p className="text-sm text-[#7088aa]">{mentor.currentCompany}</p>
+                    <p className="text-[#4a5f7c] truncate">{mentor.profileDetails?.designation || 'Alumni'}</p>
+                    <p className="text-sm text-[#7088aa]">{mentor.profileDetails?.company || 'Not specified'}</p>
                   </div>
                 </div>
 
                 {/* Info */}
                 <div className="space-y-2 mb-4">
                   <div className="flex items-center gap-2 text-sm text-[#7088aa]">
-                    <GraduationCap size={14} />
-                    <span>Batch {mentor.gradYear} • {mentor.major}</span>
+                    <Users size={14} />
+                    <span>{mentor.email}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-[#7088aa]">
-                    <Clock size={14} />
-                    <span>{mentor.yearsOfExperience} years experience</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-sm text-[#7088aa]">
-                    <MapPin size={14} />
-                    <span>{mentor.location}</span>
-                  </div>
-                  <div className="flex items-center gap-4 text-sm">
-                    <span className="flex items-center gap-1 text-yellow-500">
-                      <Star size={14} fill="currentColor" /> {mentor.rating}
-                    </span>
-                    <span className="text-[#7088aa]">{mentor.menteesTaken} mentees</span>
-                  </div>
+                  {mentor.profileDetails?.linkedin && (
+                    <div className="flex items-center gap-2 text-sm text-[#7088aa]">
+                      <Star size={14} />
+                      <a href={mentor.profileDetails.linkedin} target="_blank" rel="noopener noreferrer" className="hover:text-[#001145]">LinkedIn Profile</a>
+                    </div>
+                  )}
                 </div>
 
                 {/* Expertise */}
                 <div className="flex flex-wrap gap-1 mb-4">
-                  {mentor.expertise.map(skill => (
-                    <span key={skill} className="px-2 py-1 rounded-md text-xs font-medium bg-white text-[#001145]">
+                  {(mentor.profileDetails?.skills || []).map((skill: string, idx: number) => (
+                    <span key={idx} className="px-2 py-1 rounded-md text-xs font-medium bg-white text-[#001145]">
                       {skill}
                     </span>
                   ))}
+                  {(!mentor.profileDetails?.skills || mentor.profileDetails.skills.length === 0) && (
+                    <span className="text-xs text-gray-400">No skills listed</span>
+                  )}
                 </div>
 
-                {/* Bio */}
-                <p className="text-sm text-[#4a5f7c] mb-4 line-clamp-2">{mentor.bio}</p>
+                {/* Interests */}
+                {mentor.profileDetails?.interests && mentor.profileDetails.interests.length > 0 && (
+                  <p className="text-sm text-[#4a5f7c] mb-4 line-clamp-2">
+                    Interests: {mentor.profileDetails.interests.join(', ')}
+                  </p>
+                )}
 
                 {/* Actions */}
                 <div className="flex gap-2">
-                  <button className="flex-1 flex items-center justify-center gap-2 py-2.5 text-white rounded-xl font-medium bg-[#001145] hover:opacity-90">
-                    <UserPlus size={16} /> Request Mentorship
+                  <button 
+                    onClick={() => handleRequestMentorship(mentor._id)}
+                    disabled={requestingMentorship === mentor._id}
+                    className="flex-1 flex items-center justify-center gap-2 py-2.5 text-white rounded-xl font-medium bg-[#001145] hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+                  >
+                    {requestingMentorship === mentor._id ? (
+                      <LoadingSpinner size="sm" />
+                    ) : (
+                      <UserPlus size={16} />
+                    )}
+                    Request Mentorship
                   </button>
-                  <button className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-medium bg-white text-[#001145]">
+                  <button 
+                    onClick={() => handleMessage(mentor._id)}
+                    className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-medium bg-white text-[#001145] hover:bg-gray-50 transition-colors"
+                  >
                     <MessageSquare size={16} />
                   </button>
                 </div>

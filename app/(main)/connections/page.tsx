@@ -211,8 +211,8 @@ export default function ConnectionsPage() {
               <Sparkles className="w-12 h-12 text-gray-300 mx-auto mb-4" />
               <p className="text-gray-500">No suggestions right now</p>
             </div>
-          ) : suggestions.map((sug) => (
-            <div key={sug.id} className="bg-white rounded-xl p-5 border border-[#e4f0ff]">
+          ) : suggestions.map((sug, idx) => (
+            <div key={`${sug.id}-${idx}`} className="bg-white rounded-xl p-5 border border-[#e4f0ff]">
               <div className="flex items-start gap-4">
                 <Link href={`/profile/${sug.id}`}>
                   <div className="w-14 h-14 rounded-lg overflow-hidden bg-[#e4f0ff]">

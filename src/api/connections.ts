@@ -58,10 +58,9 @@ export const getConnections = async (params?: PaginationParams): Promise<Paginat
 };
 
 export const getPendingRequests = async (): Promise<ConnectionRequest[]> => {
-  // TODO: Backend doesn't have /connections/pending endpoint yet
-  // For now, return empty array - this will need backend implementation
-  console.warn('getPendingRequests: /connections/pending endpoint not implemented in backend');
-  return [];
+  // Backend has /connections/pending-requests endpoint
+  const response = await apiClient.get<ApiResponse<ConnectionRequest[]>>('/connections/pending-requests');
+  return response.data.data || [];
 };
 
 export const getConnectionSuggestions = async (): Promise<ConnectionSuggestion[]> => {
@@ -71,9 +70,9 @@ export const getConnectionSuggestions = async (): Promise<ConnectionSuggestion[]
 };
 
 export const sendConnectionRequest = async (alumniId: string, message?: string): Promise<ConnectionRequest> => {
-  // Backend route: POST /connections/send-request (requires Student role)
-  // Backend expects 'alumniId' not 'targetUserId'
-  const response = await apiClient.post<ApiResponse<ConnectionRequest>>('/connections/send-request', { alumniId });
+  // Backend route: POST /connections/send-request
+  // Backend expects 'sentTo' field (user ID to connect with)
+  const response = await apiClient.post<ApiResponse<ConnectionRequest>>('/connections/send-request', { sentTo: alumniId });
   return response.data.data;
 };
 

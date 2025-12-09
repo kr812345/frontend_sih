@@ -133,7 +133,7 @@ export const getEventAttendees = async (id: string): Promise<{ id: string; name:
 
 // TODO: Following endpoint is NOT implemented in backend yet
 export const getMyEvents = async (): Promise<Event[]> => {
-  console.warn('getMyEvents: /events/my-events endpoint not implemented in backend');
-  return [];
+  const response = await apiClient.get<{ success: boolean; data: Event[] }>('/events/my-events');
+  return response.data.data || [];
 };
 
