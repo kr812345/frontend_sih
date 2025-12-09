@@ -263,7 +263,23 @@ export const getMyProfile = async (userId: string): Promise<AlumniProfile> => {
 };
 
 export const updateAlumniProfile = async (id: string, data: Partial<AlumniProfile>): Promise<AlumniProfile> => {
-  const response = await apiClient.put<AlumniResponse>(`/alumni/${id}`, data);
+  // Transform frontend data structure to match backend expectation
+  const payload = {
+    name: data.name,
+    email: data.email,
+    profileDetails: {
+      phone: data.phone,
+      location: data.location,
+      designation: data.currentRole,
+      company: data.currentCompany,
+      branch: data.major || data.alumniRelation?.department,
+      graduationYear: data.gradYear && !isNaN(parseInt(data.gradYear)) ? parseInt(data.gradYear) : undefined,
+      linkedin: data.socials?.linkedin,
+      skills: data.skills,
+    }
+  };
+
+  const response = await apiClient.put<AlumniResponse>(`/alumni/${id}`, payload);
   return response.data.data as AlumniProfile;
 };
 
@@ -271,13 +287,33 @@ export const getAlumniDirectory = async (params?: AlumniSearchParams): Promise<A
   // Backend returns array, not paginated response
   // Backend supports ?search=query and ?keys=field1,field2
   const response = await apiClient.get<AlumniResponse>('/alumni', { params });
-  return (response.data.data as AlumniProfile[]) || [];
+  const data = response.data.data as any[];
+  
+  if (!Array.isArray(data)) return [];
+
+  return data.map(item => ({
+    ...item,
+    id: item._id || item.id,
+    connectionStatus: item.connectionStatus || 'none', // Ensure connectionStatus exists
+    activities: item.activities || [],
+    karmaPoints: item.karmaPoints || 0
+  })) as AlumniProfile[];
 };
 
 export const searchAlumni = async (query: string): Promise<AlumniProfile[]> => {
   // Backend doesn't have /alumni/search - use /alumni?search=query
   const response = await apiClient.get<AlumniResponse>('/alumni', { params: { search: query } });
-  return (response.data.data as AlumniProfile[]) || [];
+  const data = response.data.data as any[];
+
+  if (!Array.isArray(data)) return [];
+
+  return data.map(item => ({
+    ...item,
+    id: item._id || item.id,
+    connectionStatus: item.connectionStatus || 'none',
+    activities: item.activities || [],
+    karmaPoints: item.karmaPoints || 0
+  })) as AlumniProfile[];
 };
 
 // TODO: Not implemented in backend

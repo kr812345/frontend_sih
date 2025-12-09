@@ -49,7 +49,7 @@ export default function HomePage() {
       try {
         setLoading(true);
         const postsRes = await getAllPosts({ limit: 10 });
-        if (postsRes.items) {
+        if (postsRes?.items) {
           setPosts(postsRes.items);
         } else if (Array.isArray(postsRes)) {
              setPosts(postsRes);
