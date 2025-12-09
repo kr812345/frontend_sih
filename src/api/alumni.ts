@@ -35,6 +35,12 @@ export interface Education {
   current: boolean;
 }
 
+export interface Activity {
+  id: string;
+  description: string;
+  date: string;
+}
+
 export interface AlumniProfile {
   id: string;
   name: string;
@@ -56,6 +62,7 @@ export interface AlumniProfile {
   skills: string[];
   experiences: Experience[];
   education: Education[];
+  activities: Activity[];
   isVerified: boolean;
   connectionStatus?: 'connected' | 'pending' | 'none';
   karmaPoints?: number;
@@ -138,6 +145,7 @@ const MOCK_PROFILE: AlumniProfile = {
       current: false,
     },
   ],
+  activities: [],
   isVerified: true,
 };
 
@@ -240,8 +248,10 @@ export const getAlumniProfile = async (id: string): Promise<AlumniProfile> => {
     skills: profileDetails.skills || [],
     experiences: [], // Not in backend yet
     education: [], // Not in backend yet
+    activities: [], // Not in backend yet
     isVerified: data.userType === 'Alumni',
-    connectionStatus: 'none'
+    connectionStatus: 'none',
+    karmaPoints: 0
   };
 };
 
