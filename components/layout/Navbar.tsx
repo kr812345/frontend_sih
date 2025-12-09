@@ -13,6 +13,7 @@ const navItems = [
   { name: "Messages", href: "/messages" },
   { name: "Jobs", href: "/jobs" },
   { name: "Events", href: "/events" },
+  { name: "Campaigns", href: "/campaigns" },
   { name: "Mentorship", href: "/mentorship" },
   { name: "Communities", href: "/communities" },
   { name: "Chatbot", href: "/chatbot" },
