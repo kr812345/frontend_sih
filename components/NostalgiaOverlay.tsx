@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import Image from 'next/image';
-import { X, ChevronRight } from 'lucide-react';
+import { X, ChevronRight, ChevronLeft } from 'lucide-react';
 
 // Memory images from public folder
 const MEMORY_IMAGES = [
@@ -40,9 +40,6 @@ const ALL_MEMORIES = [
     { id: '10', title: 'Campus Life 2020', year: '2020', month: 12, batch: 'All', event: 'Campus', image: MEMORY_IMAGES[9] },
     { id: '11', title: 'Alumni Meet 2023', year: '2023', month: 12, batch: 'All', event: 'Alumni Meet', image: MEMORY_IMAGES[10] },
     { id: '12', title: 'Foundation Day 2021', year: '2021', month: 12, batch: 'All', event: 'Foundation', image: MEMORY_IMAGES[11] },
-    // Non-December memories (for testing filtering)
-    { id: '13', title: 'Summer Fest 2023', year: '2023', month: 6, batch: 'All', event: 'Fest', image: MEMORY_IMAGES[12] },
-    { id: '14', title: 'Freshers 2022', year: '2022', month: 8, batch: '2026', event: 'Freshers', image: MEMORY_IMAGES[13] },
 ];
 
 interface Memory {
@@ -63,100 +60,142 @@ export default function NostalgiaOverlay() {
 
     // Filter and select memories on mount
     useEffect(() => {
-        // Check if already shown this session
         if (typeof window !== 'undefined' && sessionStorage.getItem('nostalgia-shown')) {
             return;
         }
 
-        const currentMonth = new Date().getMonth() + 1; // 1-indexed
+        const currentMonth = new Date().getMonth() + 1;
         const currentYear = new Date().getFullYear().toString();
-
-        // For demo: use mock user batch (in real app, get from auth context)
         const userBatch = '2024';
 
-        // Filter memories from same month, previous years, matching batch or 'All'
         const eligibleMemories = ALL_MEMORIES.filter(m =>
             m.month === currentMonth &&
             m.year !== currentYear &&
             (m.batch === userBatch || m.batch === 'All')
         );
 
-        // Randomly select up to 5 memories
         const shuffled = [...eligibleMemories].sort(() => Math.random() - 0.5);
         const selected = shuffled.slice(0, 5);
 
         if (selected.length > 0) {
             setMemories(selected);
             setIsVisible(true);
-            // Mark as shown for this session
             sessionStorage.setItem('nostalgia-shown', 'true');
         }
     }, []);
 
-    // Auto-advance slideshow
+    // Auto-advance slideshow - 3 seconds
     useEffect(() => {
         if (!isVisible || memories.length === 0) return;
 
         const timer = setInterval(() => {
             handleNext();
-        }, 5000);
+        }, 3000);
 
         return () => clearInterval(timer);
     }, [isVisible, currentIndex, memories.length]);
 
+    // Handle keyboard navigation
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') handleClose();
+            if (e.key === 'ArrowRight') handleNext();
+            if (e.key === 'ArrowLeft') handlePrev();
+        };
+
+        if (isVisible) {
+            document.addEventListener('keydown', handleKeyDown);
+            return () => document.removeEventListener('keydown', handleKeyDown);
+        }
+    }, [isVisible, currentIndex, memories.length]);
+
     const handleNext = useCallback(() => {
         if (currentIndex >= memories.length - 1) {
-            // Last slide - close overlay
             handleClose();
         } else {
             setIsTransitioning(true);
             setTimeout(() => {
                 setCurrentIndex(prev => prev + 1);
                 setIsTransitioning(false);
-            }, 300);
+            }, 200);
         }
     }, [currentIndex, memories.length]);
+
+    const handlePrev = useCallback(() => {
+        if (currentIndex > 0) {
+            setIsTransitioning(true);
+            setTimeout(() => {
+                setCurrentIndex(prev => prev - 1);
+                setIsTransitioning(false);
+            }, 200);
+        }
+    }, [currentIndex]);
 
     const handleClose = useCallback(() => {
         setIsTransitioning(true);
         setTimeout(() => {
             setIsVisible(false);
-        }, 300);
+        }, 200);
     }, []);
 
     if (!isVisible || memories.length === 0) return null;
 
     const currentMemory = memories[currentIndex];
     const monthName = new Date().toLocaleString('default', { month: 'long' });
+    const yearsAgo = new Date().getFullYear() - parseInt(currentMemory.year);
 
     return (
         <div
-            className={`fixed inset-0 z-50 flex items-center justify-center p-4 transition-opacity duration-300 ${isTransitioning && currentIndex >= memories.length - 1 ? 'opacity-0' : 'opacity-100'
+            className={`fixed inset-0 z-50 flex items-center justify-center p-6 transition-opacity duration-200 ${isTransitioning && currentIndex >= memories.length - 1 ? 'opacity-0' : 'opacity-100'
                 }`}
-            style={{ backgroundColor: 'rgba(0, 0, 0, 0.85)', backdropFilter: 'blur(12px)' }}
+            style={{ backgroundColor: 'rgba(30, 41, 59, 0.92)', backdropFilter: 'blur(8px)' }}
         >
             {/* Close Button */}
             <button
                 onClick={handleClose}
-                className="absolute top-6 right-6 p-2 text-white/70 hover:text-white transition-colors rounded-full hover:bg-white/10"
+                className="absolute top-5 right-5 p-2.5 bg-white/10 hover:bg-white/20 text-white rounded-full transition-all"
                 aria-label="Close"
             >
-                <X size={28} />
+                <X size={22} />
             </button>
 
-            {/* Main Content Card */}
-            <div className="max-w-3xl w-full">
+            {/* Left Arrow */}
+            {currentIndex > 0 && (
+                <button
+                    onClick={handlePrev}
+                    className="absolute left-6 top-1/2 -translate-y-1/2 p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-all"
+                    aria-label="Previous"
+                >
+                    <ChevronLeft size={24} />
+                </button>
+            )}
+
+            {/* Right Arrow */}
+            {currentIndex < memories.length - 1 && (
+                <button
+                    onClick={handleNext}
+                    className="absolute right-6 top-1/2 -translate-y-1/2 p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-all"
+                    aria-label="Next"
+                >
+                    <ChevronRight size={24} />
+                </button>
+            )}
+
+            {/* Main Content - Smaller Card */}
+            <div className="max-w-lg w-full">
                 {/* Header */}
-                <div className="text-center mb-6">
-                    <p className="text-white/60 text-sm uppercase tracking-widest mb-2">Memories from {monthName}</p>
-                    <h2 className="text-white text-2xl font-light">Look back at this time...</h2>
+                <div className="text-center mb-4">
+                    <p className="text-white/70 text-xs font-medium uppercase tracking-wider mb-1">
+                        Memories from {monthName}
+                    </p>
+                    <h2 className="text-white text-lg font-medium">Look back at this time...</h2>
                 </div>
 
                 {/* Photo Card */}
-                <div className={`relative transition-all duration-300 ${isTransitioning ? 'opacity-0 scale-95' : 'opacity-100 scale-100'}`}>
-                    <div className="bg-white rounded-3xl overflow-hidden shadow-2xl">
-                        {/* Image */}
-                        <div className="relative aspect-video">
+                <div className={`transition-all duration-200 ${isTransitioning ? 'opacity-0 scale-98' : 'opacity-100 scale-100'}`}>
+                    <div className="bg-white rounded-2xl overflow-hidden shadow-xl">
+                        {/* Image - Smaller aspect ratio */}
+                        <div className="relative aspect-[16/10]">
                             <Image
                                 src={currentMemory.image}
                                 alt={currentMemory.title}
@@ -167,15 +206,15 @@ export default function NostalgiaOverlay() {
                         </div>
 
                         {/* Info */}
-                        <div className="p-6 bg-white">
+                        <div className="p-4">
                             <div className="flex items-center justify-between">
                                 <div>
-                                    <h3 className="text-xl font-semibold text-gray-900">{currentMemory.title}</h3>
-                                    <p className="text-gray-500 mt-1">{currentMemory.year} • {currentMemory.event}</p>
+                                    <h3 className="text-base font-semibold text-gray-900">{currentMemory.title}</h3>
+                                    <p className="text-gray-500 text-sm">{currentMemory.event}</p>
                                 </div>
                                 <div className="text-right">
-                                    <p className="text-3xl font-light text-gray-900">{currentMemory.year}</p>
-                                    <p className="text-gray-400 text-sm">{parseInt(new Date().getFullYear().toString()) - parseInt(currentMemory.year)} years ago</p>
+                                    <p className="text-2xl font-semibold text-[#001145]">{currentMemory.year}</p>
+                                    <p className="text-gray-400 text-xs">{yearsAgo} year{yearsAgo > 1 ? 's' : ''} ago</p>
                                 </div>
                             </div>
                         </div>
@@ -183,27 +222,38 @@ export default function NostalgiaOverlay() {
                 </div>
 
                 {/* Progress Dots */}
-                <div className="flex items-center justify-center gap-2 mt-6">
+                <div className="flex items-center justify-center gap-1.5 mt-4">
                     {memories.map((_, idx) => (
-                        <div
+                        <button
                             key={idx}
-                            className={`h-1.5 rounded-full transition-all duration-300 ${idx === currentIndex
-                                    ? 'w-8 bg-white'
-                                    : idx < currentIndex
-                                        ? 'w-1.5 bg-white/60'
-                                        : 'w-1.5 bg-white/30'
+                            onClick={() => {
+                                setIsTransitioning(true);
+                                setTimeout(() => {
+                                    setCurrentIndex(idx);
+                                    setIsTransitioning(false);
+                                }, 200);
+                            }}
+                            className={`h-1.5 rounded-full transition-all duration-200 ${idx === currentIndex
+                                    ? 'w-6 bg-white'
+                                    : 'w-1.5 bg-white/40 hover:bg-white/60'
                                 }`}
                         />
                     ))}
                 </div>
 
-                {/* Skip Button */}
-                <div className="flex justify-center mt-6">
+                {/* Controls */}
+                <div className="flex justify-center gap-3 mt-4">
+                    <button
+                        onClick={handleClose}
+                        className="px-4 py-2 text-white/70 hover:text-white text-sm transition-colors"
+                    >
+                        Close
+                    </button>
                     <button
                         onClick={handleNext}
-                        className="flex items-center gap-2 px-6 py-2.5 text-white/80 hover:text-white text-sm font-medium transition-colors rounded-full hover:bg-white/10"
+                        className="flex items-center gap-1.5 px-4 py-2 bg-white/10 hover:bg-white/20 text-white text-sm rounded-full transition-colors"
                     >
-                        {currentIndex >= memories.length - 1 ? 'Close' : 'Skip'} <ChevronRight size={18} />
+                        {currentIndex >= memories.length - 1 ? 'Finish' : 'Next'} <ChevronRight size={16} />
                     </button>
                 </div>
             </div>
