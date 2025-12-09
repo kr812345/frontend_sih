@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import useSocket from "@/hooks/useSocket";
 import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/input";
 import { Send, MessageCircle } from "lucide-react";
 
