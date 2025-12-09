@@ -9,16 +9,22 @@ const MEMORY_IMAGES = [
   '/Screenshot 2025-12-09 091511.png',
   '/Screenshot 2025-12-09 091527.png',
   '/Screenshot 2025-12-09 091532.png',
+  '/Screenshot 2025-12-09 093822.png',
   '/Screenshot 2025-12-09 091537.png',
   '/Screenshot 2025-12-09 091551.png',
+  '/Screenshot 2025-12-09 093830.png',
   '/Screenshot 2025-12-09 091611.png',
   '/Screenshot 2025-12-09 091619.png',
+  '/Screenshot 2025-12-09 093840.png',
   '/Screenshot 2025-12-09 091627.png',
   '/Screenshot 2025-12-09 091649.png',
+  '/Screenshot 2025-12-09 093900.png',
   '/Screenshot 2025-12-09 091701.png',
   '/Screenshot 2025-12-09 091709.png',
+  '/Screenshot 2025-12-09 093907.png',
   '/Screenshot 2025-12-09 091714.png',
   '/Screenshot 2025-12-09 091721.png',
+  '/Screenshot 2025-12-09 093913.png',
   '/Screenshot 2025-12-09 091736.png',
   '/Screenshot 2025-12-09 091748.png',
   '/Screenshot 2025-12-09 091758.png',
@@ -40,7 +46,14 @@ const MOCK_MEMORIES = [
   { id: '10', title: 'Graduation Ceremony', year: '2022', batch: '2022', event: 'Graduation', likes: 678, comments: 123, uploadedBy: 'Ananya Patel', image: MEMORY_IMAGES[9] },
   { id: '11', title: 'Workshop Sessions', year: '2022', batch: 'All', event: 'Workshop', likes: 145, comments: 21, uploadedBy: 'Karthik Iyer', image: MEMORY_IMAGES[10] },
   { id: '12', title: 'Independence Day', year: '2022', batch: 'All', event: 'National', likes: 234, comments: 38, uploadedBy: 'Deepika Sharma', image: MEMORY_IMAGES[11] },
+  { id: '13', title: 'Alumni Meet 2024', year: '2024', batch: 'All', event: 'Alumni Meet', likes: 456, comments: 67, uploadedBy: 'Raj Malhotra', image: MEMORY_IMAGES[12] },
+  { id: '14', title: 'Convocation Day', year: '2023', batch: '2023', event: 'Graduation', likes: 589, comments: 98, uploadedBy: 'Simran Kaur', image: MEMORY_IMAGES[13] },
+  { id: '15', title: 'Foundation Day', year: '2024', batch: 'All', event: 'Annual Day', likes: 345, comments: 52, uploadedBy: 'Arun Sharma', image: MEMORY_IMAGES[14] },
+  { id: '16', title: 'College Fest', year: '2023', batch: 'All', event: 'Cultural', likes: 423, comments: 71, uploadedBy: 'Meera Joshi', image: MEMORY_IMAGES[15] },
+  { id: '17', title: 'Project Exhibition', year: '2024', batch: '2024', event: 'Tech Fest', likes: 287, comments: 43, uploadedBy: 'Venkat Rao', image: MEMORY_IMAGES[16] },
+  { id: '18', title: 'Sports Meet Finals', year: '2023', batch: 'All', event: 'Sports Day', likes: 356, comments: 54, uploadedBy: 'Rashid Khan', image: MEMORY_IMAGES[17] },
 ];
+
 
 const YEARS = ['All Years', '2024', '2023', '2022', '2021', '2020'];
 const BATCHES = ['All Batches', '2024', '2023', '2022', '2021', '2020'];
@@ -152,8 +165,8 @@ export default function MemoriesPage() {
           <button
             onClick={() => setShowFilters(!showFilters)}
             className={`flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-medium transition-all ${showFilters
-                ? 'bg-gray-900 text-white'
-                : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+              ? 'bg-gray-900 text-white'
+              : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
               }`}
           >
             <Filter size={16} /> Filters
