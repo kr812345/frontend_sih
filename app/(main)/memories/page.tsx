@@ -69,6 +69,21 @@ export default function MemoriesPage() {
   const [selectedMemory, setSelectedMemory] = useState<typeof MOCK_MEMORIES[0] | null>(null);
   const [showUploadModal, setShowUploadModal] = useState(false);
 
+  // Handle ESC key to close lightbox
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setSelectedMemory(null);
+        setShowUploadModal(false);
+      }
+    };
+
+    if (selectedMemory || showUploadModal) {
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [selectedMemory, showUploadModal]);
+
   const filteredMemories = memories.filter(m => {
     const matchesSearch = m.title.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesYear = yearFilter === 'All Years' || m.year === yearFilter;

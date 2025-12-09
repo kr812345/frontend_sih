@@ -1,6 +1,7 @@
 import React from 'react';
 import Navbar from '@/components/layout/Navbar';
 import Footer from '@/components/layout/Footer';
+import NostalgiaOverlay from '@/components/NostalgiaOverlay';
 
 export default function MainLayout({
   children,
@@ -14,6 +15,7 @@ export default function MainLayout({
         {children}
       </main>
       <Footer />
+      <NostalgiaOverlay />
     </>
   );
 }

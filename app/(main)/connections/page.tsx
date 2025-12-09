@@ -17,7 +17,7 @@ export default function ConnectionsPage() {
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  
+
   // AI Analysis State
   const [isAIModalOpen, setIsAIModalOpen] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState<string | null>(null);
@@ -40,7 +40,7 @@ export default function ConnectionsPage() {
     setAiAnalysis(null);
     setIsAIModalOpen(true);
     setIsAnalyzing(true);
-    
+
     try {
       const result = await analyzeProfile(profile);
       setAiAnalysis(result);
@@ -83,10 +83,6 @@ export default function ConnectionsPage() {
 
   const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').toUpperCase();
 
-  const filteredConnections = connections.filter(c =>
-    c.user.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
   const tabs = [
     { id: 'connections' as const, label: 'My Connections', count: connections.length },
     { id: 'pending' as const, label: 'Pending', count: pendingRequests.length },
@@ -95,11 +91,42 @@ export default function ConnectionsPage() {
 
   if (loading) return <LoadingSpinner fullScreen text="Loading..." />;
 
+  // Filter all data based on search term
+  const filteredConnections = connections.filter(c =>
+    c.user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (c.user.currentRole && c.user.currentRole.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (c.user.currentCompany && c.user.currentCompany.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
+  const filteredPending = pendingRequests.filter(r =>
+    r.from.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (r.from.currentRole && r.from.currentRole.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (r.from.currentCompany && r.from.currentCompany.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
+  const filteredSuggestions = suggestions.filter(s =>
+    s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (s.currentRole && s.currentRole.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    (s.currentCompany && s.currentCompany.toLowerCase().includes(searchTerm.toLowerCase()))
+  );
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-[#001145]">Connections</h1>
         <p className="text-gray-500">Manage your alumni network</p>
+      </div>
+
+      {/* Global Search Bar */}
+      <div className="relative">
+        <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
+        <input
+          type="text"
+          placeholder="Search all alumni by name, role, or company..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full pl-12 pr-4 py-3 bg-white border border-[#e4f0ff] rounded-lg focus:outline-none focus:border-[#001145]"
+        />
       </div>
 
       {/* Tabs */}
@@ -112,15 +139,6 @@ export default function ConnectionsPage() {
           </button>
         ))}
       </div>
-
-      {/* Search */}
-      {activeTab === 'connections' && (
-        <div className="relative">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={20} />
-          <input type="text" placeholder="Search connections..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-white border border-[#e4f0ff] rounded-lg focus:outline-none focus:border-[#001145]" />
-        </div>
-      )}
 
       {/* My Connections */}
       {activeTab === 'connections' && (
@@ -170,12 +188,12 @@ export default function ConnectionsPage() {
       {/* Pending Requests */}
       {activeTab === 'pending' && (
         <div className="space-y-3">
-          {pendingRequests.length === 0 ? (
+          {filteredPending.length === 0 ? (
             <div className="bg-white rounded-xl p-12 text-center">
               <Clock className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">No pending requests</p>
+              <p className="text-gray-500">{searchTerm ? 'No matching pending requests' : 'No pending requests'}</p>
             </div>
-          ) : pendingRequests.map((req) => (
+          ) : filteredPending.map((req) => (
             <div key={req.id} className="bg-white rounded-xl p-5 border border-[#e4f0ff] flex items-center gap-4">
               <Link href={`/profile/${req.from.id}`}>
                 <div className="w-14 h-14 rounded-lg overflow-hidden bg-[#e4f0ff]">
@@ -206,12 +224,12 @@ export default function ConnectionsPage() {
       {/* Suggestions */}
       {activeTab === 'suggestions' && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {suggestions.length === 0 ? (
+          {filteredSuggestions.length === 0 ? (
             <div className="col-span-full bg-white rounded-xl p-12 text-center">
               <Sparkles className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-              <p className="text-gray-500">No suggestions right now</p>
+              <p className="text-gray-500">{searchTerm ? 'No matching suggestions' : 'No suggestions right now'}</p>
             </div>
-          ) : suggestions.map((sug, idx) => (
+          ) : filteredSuggestions.map((sug, idx) => (
             <div key={`${sug.id}-${idx}`} className="bg-white rounded-xl p-5 border border-[#e4f0ff]">
               <div className="flex items-start gap-4">
                 <Link href={`/profile/${sug.id}`}>
@@ -235,7 +253,7 @@ export default function ConnectionsPage() {
                 </div>
               </div>
               <div className="flex gap-2 mt-4">
-                <button 
+                <button
                   onClick={() => handleAnalyzeProfile(sug)}
                   className="flex-1 py-2 bg-[#e4f0ff] text-[#001145] rounded-lg text-sm font-medium flex items-center justify-center gap-2 hover:bg-[#d0e6ff] transition-colors"
                 >
