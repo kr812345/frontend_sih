@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import { Search, Filter, Heart, MessageCircle, Upload, Grid, List, X, ChevronLeft, ChevronRight, Download, Share2 } from 'lucide-react';
 
-// Screenshot images for memories - all 24 images
+// Screenshot images for memories
 const MEMORY_IMAGES = [
   '/Screenshot 2025-12-09 091511.png',
   '/Screenshot 2025-12-09 091527.png',
@@ -54,6 +54,7 @@ const MOCK_MEMORIES = [
   { id: '18', title: 'Sports Meet Finals', year: '2023', batch: 'All', event: 'Sports Day', likes: 356, comments: 54, uploadedBy: 'Rashid Khan', image: MEMORY_IMAGES[17] },
 ];
 
+
 const YEARS = ['All Years', '2024', '2023', '2022', '2021', '2020'];
 const BATCHES = ['All Batches', '2024', '2023', '2022', '2021', '2020'];
 const EVENTS = ['All Events', 'Farewell', 'Tech Fest', 'Sports Day', 'Cultural', 'Freshers', 'Graduation'];
@@ -92,6 +93,7 @@ export default function MemoriesPage() {
     return matchesSearch && matchesYear && matchesBatch && matchesEvent;
   });
 
+  // Featured: This Week in History
   const thisWeekMemories = memories.slice(0, 4);
 
   return (
@@ -110,7 +112,7 @@ export default function MemoriesPage() {
         </button>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats Cards - Clean White, No Icons */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <div className="bg-white rounded-2xl p-5 border border-gray-200">
           <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Total Photos</p>
@@ -146,7 +148,12 @@ export default function MemoriesPage() {
               className="flex-shrink-0 w-48 aspect-[4/3] rounded-xl overflow-hidden cursor-pointer group relative"
               onClick={() => setSelectedMemory(memory)}
             >
-              <Image src={memory.image} alt={memory.title} fill className="object-cover group-hover:scale-110 transition-transform duration-500" />
+              <Image
+                src={memory.image}
+                alt={memory.title}
+                fill
+                className="object-cover group-hover:scale-110 transition-transform duration-500"
+              />
               <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
               <div className="absolute bottom-0 left-0 right-0 p-3">
                 <p className="text-sm text-white font-medium truncate">{memory.title}</p>
@@ -172,7 +179,9 @@ export default function MemoriesPage() {
         <div className="flex gap-2">
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-medium transition-all ${showFilters ? 'bg-gray-900 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+            className={`flex items-center justify-center gap-2 px-5 py-3 rounded-xl text-sm font-medium transition-all ${showFilters
+              ? 'bg-gray-900 text-white'
+              : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
               }`}
           >
             <Filter size={16} /> Filters
@@ -197,33 +206,45 @@ export default function MemoriesPage() {
       {/* Filters Row */}
       {showFilters && (
         <div className="flex flex-wrap gap-3">
-          <select value={yearFilter} onChange={(e) => setYearFilter(e.target.value)} className="px-4 py-2.5 border border-gray-200 rounded-xl bg-white text-sm">
+          <select
+            value={yearFilter}
+            onChange={(e) => setYearFilter(e.target.value)}
+            className="px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-300 bg-white text-sm"
+          >
             {YEARS.map(year => <option key={year}>{year}</option>)}
           </select>
-          <select value={batchFilter} onChange={(e) => setBatchFilter(e.target.value)} className="px-4 py-2.5 border border-gray-200 rounded-xl bg-white text-sm">
+          <select
+            value={batchFilter}
+            onChange={(e) => setBatchFilter(e.target.value)}
+            className="px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-300 bg-white text-sm"
+          >
             {BATCHES.map(batch => <option key={batch}>{batch}</option>)}
           </select>
-          <select value={eventFilter} onChange={(e) => setEventFilter(e.target.value)} className="px-4 py-2.5 border border-gray-200 rounded-xl bg-white text-sm">
+          <select
+            value={eventFilter}
+            onChange={(e) => setEventFilter(e.target.value)}
+            className="px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-300 bg-white text-sm"
+          >
             {EVENTS.map(event => <option key={event}>{event}</option>)}
           </select>
         </div>
       )}
 
-      {/* Gallery - CSS Columns Masonry (renders based on natural image sizes, no white space) */}
+      {/* Gallery Grid - Masonry Style */}
       {viewMode === 'grid' ? (
-        <div className="columns-2 md:columns-3 lg:columns-4 gap-4">
-          {filteredMemories.map((memory) => (
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {filteredMemories.map((memory, idx) => (
             <div
               key={memory.id}
               onClick={() => setSelectedMemory(memory)}
-              className="group relative rounded-2xl overflow-hidden cursor-pointer shadow-sm hover:shadow-xl transition-all duration-300 mb-4 break-inside-avoid"
+              className={`group relative rounded-2xl overflow-hidden cursor-pointer shadow-sm hover:shadow-xl transition-all duration-300 ${idx % 5 === 0 ? 'md:row-span-2 aspect-[3/4]' : 'aspect-square'
+                }`}
             >
               <Image
                 src={memory.image}
                 alt={memory.title}
-                width={400}
-                height={300}
-                className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-500"
+                fill
+                className="object-cover group-hover:scale-105 transition-transform duration-500"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
@@ -247,7 +268,12 @@ export default function MemoriesPage() {
                 className="flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors cursor-pointer"
               >
                 <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 relative">
-                  <Image src={memory.image} alt={memory.title} fill className="object-cover" />
+                  <Image
+                    src={memory.image}
+                    alt={memory.title}
+                    fill
+                    className="object-cover"
+                  />
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-gray-900 truncate">{memory.title}</h3>
@@ -272,7 +298,10 @@ export default function MemoriesPage() {
       {/* Lightbox Modal */}
       {selectedMemory && (
         <div className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4">
-          <button onClick={() => setSelectedMemory(null)} className="absolute top-4 right-4 p-2 text-white/70 hover:text-white transition-colors z-10">
+          <button
+            onClick={() => setSelectedMemory(null)}
+            className="absolute top-4 right-4 p-2 text-white/70 hover:text-white transition-colors z-10"
+          >
             <X size={28} />
           </button>
           <button className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-white/10 rounded-full text-white hover:bg-white/20 transition-colors">
@@ -284,7 +313,12 @@ export default function MemoriesPage() {
 
           <div className="max-w-5xl w-full">
             <div className="aspect-video rounded-2xl overflow-hidden relative shadow-2xl">
-              <Image src={selectedMemory.image} alt={selectedMemory.title} fill className="object-cover" />
+              <Image
+                src={selectedMemory.image}
+                alt={selectedMemory.title}
+                fill
+                className="object-cover"
+              />
             </div>
             <div className="flex items-center justify-between text-white mt-6">
               <div>
@@ -325,18 +359,18 @@ export default function MemoriesPage() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
-                <input type="text" placeholder="e.g., Farewell Party 2024" className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm" />
+                <input type="text" placeholder="e.g., Farewell Party 2024" className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-300 text-sm" />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Year</label>
-                  <select className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-white text-sm">
+                  <select className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-300 bg-white text-sm">
                     {YEARS.slice(1).map(year => <option key={year}>{year}</option>)}
                   </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Event</label>
-                  <select className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-white text-sm">
+                  <select className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-300 bg-white text-sm">
                     {EVENTS.slice(1).map(event => <option key={event}>{event}</option>)}
                   </select>
                 </div>
