@@ -82,3 +82,17 @@ export const rejectMentorship = async (mentorshipId: string): Promise<Mentorship
   const response = await apiClient.post<ApiResponse<{ mentorship: Mentorship }>>(`/mentorships/reject/${mentorshipId}`);
   return response.data.data.mentorship;
 };
+
+// Apply to become a mentor (for alumni)
+export interface ApplyMentorData {
+  expertise: string;
+  yearsOfExperience: string;
+  maxMentees?: number;
+  availability: 'weekdays' | 'weekends' | 'both';
+  bio: string;
+}
+
+export const applyAsMentor = async (data: ApplyMentorData): Promise<{ success: boolean; message: string }> => {
+  const response = await apiClient.post<ApiResponse<any>>('/mentorships/apply', data);
+  return { success: response.data.success, message: response.data.message || 'Success' };
+};

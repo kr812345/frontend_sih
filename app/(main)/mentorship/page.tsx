@@ -373,11 +373,31 @@ export default function MentorshipPage() {
 
           <form className="space-y-6" onSubmit={async (e) => {
             e.preventDefault();
+            const form = e.target as HTMLFormElement;
+            const formData = new FormData(form);
+            
+            const expertise = formData.get('expertise') as string;
+            const yearsOfExperience = formData.get('yearsOfExperience') as string;
+            const maxMenteesStr = formData.get('maxMentees') as string;
+            const availability = formData.get('availability') as 'weekdays' | 'weekends' | 'both';
+            const bio = formData.get('bio') as string;
+
+            if (!expertise || !bio || !availability) {
+              showError('Please fill out all required fields.');
+              return;
+            }
+
             const toastId = showLoading('Submitting application...');
             
             try {
-              // Simulate API call
-              await new Promise(resolve => setTimeout(resolve, 1500));
+              const { applyAsMentor } = await import('../../../src/api/mentorship');
+              await applyAsMentor({
+                expertise,
+                yearsOfExperience,
+                maxMentees: maxMenteesStr ? parseInt(maxMenteesStr) : 3,
+                availability,
+                bio,
+              });
               
               const user = await verifyAlumni();
               if (user && user._id) {
@@ -388,24 +408,26 @@ export default function MentorshipPage() {
                  } catch (rewardError) {
                     console.error('Reward error:', rewardError);
                     dismissToast(toastId);
-                    showSuccess('Application submitted successfully!');
+                    showSuccess('You are now registered as a mentor!');
                  }
               } else {
                  dismissToast(toastId);
-                 showSuccess('Application submitted successfully!');
+                 showSuccess('You are now registered as a mentor!');
               }
               
-              // Reset form or redirect if needed
-              // setActiveTab('find'); 
-            } catch (error) {
+              form.reset();
+              setActiveTab('find');
+            } catch (error: any) {
               dismissToast(toastId);
-              showError('Failed to submit application. Please try again.');
+              showError(error.response?.data?.message || 'Failed to submit application. Please try again.');
             }
           }}>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Areas of Expertise</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Areas of Expertise *</label>
               <input
                 type="text"
+                name="expertise"
+                required
                 placeholder="e.g., System Design, Career Growth, Interview Prep"
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-300 text-sm"
               />
@@ -413,45 +435,47 @@ export default function MentorshipPage() {
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Years of Experience</label>
-              <select className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-300 bg-white text-sm">
-                <option>3-5 years</option>
-                <option>5-8 years</option>
-                <option>8-12 years</option>
-                <option>12+ years</option>
+              <select name="yearsOfExperience" className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-300 bg-white text-sm">
+                <option value="3-5 years">3-5 years</option>
+                <option value="5-8 years">5-8 years</option>
+                <option value="8-12 years">8-12 years</option>
+                <option value="12+ years">12+ years</option>
               </select>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">How many mentees can you take?</label>
-              <select className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-300 bg-white text-sm">
-                <option>1-2 mentees</option>
-                <option>3-5 mentees</option>
-                <option>5+ mentees</option>
+              <select name="maxMentees" className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-300 bg-white text-sm">
+                <option value="2">1-2 mentees</option>
+                <option value="5">3-5 mentees</option>
+                <option value="10">5+ mentees</option>
               </select>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Availability</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Availability *</label>
               <div className="flex gap-4">
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" name="availability" defaultChecked className="w-4 h-4 text-gray-900" />
+                  <input type="radio" name="availability" value="weekdays" defaultChecked className="w-4 h-4 text-gray-900" />
                   <span className="text-sm text-gray-600">Weekdays</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" name="availability" className="w-4 h-4 text-gray-900" />
+                  <input type="radio" name="availability" value="weekends" className="w-4 h-4 text-gray-900" />
                   <span className="text-sm text-gray-600">Weekends</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="radio" name="availability" className="w-4 h-4 text-gray-900" />
+                  <input type="radio" name="availability" value="both" className="w-4 h-4 text-gray-900" />
                   <span className="text-sm text-gray-600">Both</span>
                 </label>
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Brief Bio (For mentees to know you better)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Brief Bio (For mentees to know you better) *</label>
               <textarea
                 rows={4}
+                name="bio"
+                required
                 placeholder="Tell us about your journey and what you can offer as a mentor..."
                 className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-200 focus:border-gray-300 resize-none text-sm"
               />
@@ -462,7 +486,7 @@ export default function MentorshipPage() {
             </button>
 
             <p className="text-xs text-center text-gray-400">
-              We'll review your application and get back within 3-5 business days.
+              Your mentor profile will be visible to students immediately.
             </p>
           </form>
         </div>
