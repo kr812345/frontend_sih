@@ -7,16 +7,19 @@ import { Search, UserPlus, Check, X, MessageSquare, Users, Clock, Sparkles } fro
 import { Button, LoadingSpinner } from '@/components/ui';
 import AIAnalysisModal from '@/components/AIAnalysisModal';
 import { analyzeProfile } from '@/src/lib/gemini';
-import { MOCK_CONNECTIONS, MOCK_PENDING_REQUESTS, MOCK_SUGGESTIONS } from '@/src/data/mockData';
-import { getConnections, getPendingRequests, getConnectionSuggestions } from '@/src/api/connections';
+import { getConnections, getPendingRequests, getConnectionSuggestions, sendConnectionRequest } from '@/src/api/connections';
+import { searchAlumni, AlumniProfile } from '@/src/api/alumni';
+import toast from 'react-hot-toast';
 
 export default function ConnectionsPage() {
-  const [activeTab, setActiveTab] = useState<'connections' | 'pending' | 'suggestions'>('connections');
+  const [activeTab, setActiveTab] = useState<'connections' | 'pending' | 'suggestions'>('suggestions');
   const [connections, setConnections] = useState<any[]>([]);
   const [pendingRequests, setPendingRequests] = useState<any[]>([]);
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [searchResults, setSearchResults] = useState<AlumniProfile[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   // AI Analysis State
   const [isAIModalOpen, setIsAIModalOpen] = useState(false);
@@ -57,19 +60,46 @@ export default function ConnectionsPage() {
         const [connData, reqData, sugData] = await Promise.all([
           getConnections(), getPendingRequests(), getConnectionSuggestions()
         ]);
-        setConnections(connData.items?.length ? connData.items : MOCK_CONNECTIONS);
-        setPendingRequests(reqData?.length ? reqData : MOCK_PENDING_REQUESTS);
-        setSuggestions(sugData?.length ? sugData : MOCK_SUGGESTIONS);
-      } catch {
-        setConnections(MOCK_CONNECTIONS);
-        setPendingRequests(MOCK_PENDING_REQUESTS);
-        setSuggestions(MOCK_SUGGESTIONS);
+        setConnections(connData.items || []);
+        setPendingRequests(reqData || []);
+        setSuggestions(sugData || []);
+      } catch (error) {
+        console.error("Error fetching connections:", error);
+        setConnections([]);
+        setPendingRequests([]);
+        setSuggestions([]);
       } finally {
         setLoading(false);
       }
     };
     fetchData();
   }, []);
+
+  // Global search handler - searches ALL registered users
+  useEffect(() => {
+    const performSearch = async () => {
+      if (!searchTerm.trim()) {
+        setSearchResults([]);
+        setIsSearching(false);
+        return;
+      }
+
+      setIsSearching(true);
+      try {
+        const results = await searchAlumni(searchTerm);
+        setSearchResults(results);
+      } catch (error) {
+        console.error('Error searching alumni:', error);
+        toast.error('Failed to search users');
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    };
+
+    const debounce = setTimeout(performSearch, 300);
+    return () => clearTimeout(debounce);
+  }, [searchTerm]);
 
   const handleAccept = (id: string) => {
     const req = pendingRequests.find(r => r.id === id);
@@ -78,15 +108,26 @@ export default function ConnectionsPage() {
   };
 
   const handleReject = (id: string) => setPendingRequests(prev => prev.filter(r => r.id !== id));
-  const handleConnect = (id: string) => setSuggestions(prev => prev.filter(s => s.id !== id));
+  
+  const handleConnect = async (id: string) => {
+    try {
+      await sendConnectionRequest(id);
+      toast.success('Connection request sent!');
+      setSuggestions(prev => prev.filter(s => s.id !== id));
+      setSearchResults(prev => prev.filter(s => s.id !== id));
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || 'Failed to send connection request');
+    }
+  };
+  
   const handleRemove = (id: string) => setConnections(prev => prev.filter(c => c.id !== id));
 
   const getInitials = (name: string) => name.split(' ').map(n => n[0]).join('').toUpperCase();
 
   const tabs = [
+    { id: 'suggestions' as const, label: 'Suggestions', count: suggestions.length },
     { id: 'connections' as const, label: 'My Connections', count: connections.length },
     { id: 'pending' as const, label: 'Pending', count: pendingRequests.length },
-    { id: 'suggestions' as const, label: 'Suggestions', count: suggestions.length },
   ];
 
   if (loading) return <LoadingSpinner fullScreen text="Loading..." />;
@@ -129,8 +170,62 @@ export default function ConnectionsPage() {
         />
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-2">
+      {/* Global Search Results */}
+      {searchTerm && (
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold text-[#001145]">Search Results</h2>
+            {isSearching && <LoadingSpinner size="sm" />}
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {searchResults.length === 0 && !isSearching ? (
+              <div className="col-span-full bg-white rounded-xl p-12 text-center">
+                <Search className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500">No users found matching "{searchTerm}"</p>
+              </div>
+            ) : searchResults.map((user) => (
+              <div key={user.id} className="bg-white rounded-xl p-5 border border-[#e4f0ff]">
+                <div className="flex items-start gap-4">
+                  <Link href={`/profile/${user.id}`}>
+                    <div className="w-14 h-14 rounded-lg overflow-hidden bg-[#e4f0ff]">
+                      {user.avatarUrl ? (
+                        <Image src={user.avatarUrl} alt={user.name} width={56} height={56} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-lg font-bold text-white bg-[#001145]">
+                          {getInitials(user.name)}
+                        </div>
+                      )}
+                    </div>
+                  </Link>
+                  <div className="flex-1 min-w-0">
+                    <Link href={`/profile/${user.id}`} className="font-bold text-[#001145] hover:underline block truncate">
+                      {user.name}
+                    </Link>
+                    <p className="text-sm text-gray-600 truncate">{user.currentRole}</p>
+                    <p className="text-sm text-gray-500 truncate">{user.currentCompany}</p>
+                    {user.gradYear && <p className="text-xs text-gray-400 mt-1">Class of {user.gradYear}</p>}
+                  </div>
+                </div>
+                <div className="mt-4 pt-4 border-t border-[#e4f0ff]">
+                  <button 
+                    onClick={() => handleConnect(user.id)}
+                    className="w-full py-2 bg-[#001145] text-white rounded-lg text-sm font-medium flex items-center justify-center gap-2 hover:bg-[#001145]/90 transition-colors"
+                  >
+                    <UserPlus size={14} /> Connect
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Hide tabs when searching */}
+      {!searchTerm && (
+        <>
+          {/* Tabs */}
+          <div className="flex gap-2">
         {tabs.map((tab) => (
           <button key={tab.id} onClick={() => setActiveTab(tab.id)}
             className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-colors ${activeTab === tab.id ? 'bg-[#001145] text-white' : 'bg-white text-[#001145] border border-[#e4f0ff] hover:bg-[#e4f0ff]'
@@ -267,6 +362,8 @@ export default function ConnectionsPage() {
             </div>
           ))}
         </div>
+      )}
+        </>
       )}
       <AIAnalysisModal
         isOpen={isAIModalOpen}

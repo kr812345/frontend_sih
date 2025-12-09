@@ -6,39 +6,6 @@ import { Heart, Target, TrendingUp, Filter, DollarSign, Users } from 'lucide-rea
 import { Button, LoadingSpinner } from '@/components/ui';
 import { getAllCampaigns, Campaign } from '@/src/api/campaigns';
 
-const MOCK_CAMPAIGNS: Campaign[] = [
-  {
-    id: '1', title: 'Scholarship Fund for Underprivileged Students', shortDescription: 'Help brilliant students complete their education.',
-    description: 'Support 50 students from underprivileged backgrounds.', category: 'Scholarship', goalAmount: 2500000, raisedAmount: 1875000,
-    donorsCount: 234, status: 'active', isFeatured: true, createdAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-    endDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000).toISOString()
-  },
-  {
-    id: '2', title: 'New Computer Lab for Engineering', shortDescription: 'Upgrade our computer lab with modern equipment.',
-    description: 'State-of-the-art lab for engineering students.', category: 'Infrastructure', goalAmount: 5000000, raisedAmount: 3250000,
-    donorsCount: 156, status: 'active', isFeatured: true, createdAt: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
-    endDate: new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString()
-  },
-  {
-    id: '3', title: 'AI Research Center Development', shortDescription: 'Build a world-class AI research facility.',
-    description: 'Cutting-edge AI research center.', category: 'Research', goalAmount: 10000000, raisedAmount: 4500000,
-    donorsCount: 89, status: 'active', isFeatured: false, createdAt: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
-    endDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString()
-  },
-  {
-    id: '4', title: 'Sports Complex Renovation', shortDescription: 'Renovate sports facilities to Olympic standards.',
-    description: 'Major upgrades for national tournaments.', category: 'Sports', goalAmount: 8000000, raisedAmount: 6800000,
-    donorsCount: 312, status: 'active', isFeatured: false, createdAt: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString(),
-    endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
-  },
-  {
-    id: '5', title: 'Community Outreach Program', shortDescription: 'Fund annual community service initiatives.',
-    description: 'Education and healthcare for nearby villages.', category: 'Community', goalAmount: 1000000, raisedAmount: 750000,
-    donorsCount: 178, status: 'active', isFeatured: false, createdAt: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
-    endDate: new Date(Date.now() + 75 * 24 * 60 * 60 * 1000).toISOString()
-  },
-];
-
 const CATEGORIES = ['all', 'Scholarship', 'Infrastructure', 'Research', 'Sports', 'Community'];
 
 export default function CampaignsPage() {
@@ -50,9 +17,9 @@ export default function CampaignsPage() {
     const fetchData = async () => {
       try {
         const data = await getAllCampaigns();
-        setCampaigns(data?.items?.length ? data.items : MOCK_CAMPAIGNS);
-      } catch {
-        setCampaigns(MOCK_CAMPAIGNS);
+        setCampaigns(data?.items || []);
+      } catch (error) {
+        console.error("Error fetching campaigns:", error);
       } finally {
         setLoading(false);
       }

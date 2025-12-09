@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { Button, LoadingSpinner } from '@/components/ui';
 import AIAnalysisModal from '@/components/AIAnalysisModal';
 import { analyzeJobCompatibility } from '@/src/lib/gemini';
-import { MOCK_JOBS } from '@/src/data/mockData';
 import { getAllJobs } from '@/src/api/jobs';
 
 interface Job {
@@ -74,10 +73,11 @@ export default function JobsPage() {
             description: j.description, createdAt: j.createdAt, skillsRequired: j.skillsRequired || [],
           } as Job)));
         } else {
-          setJobs(MOCK_JOBS as Job[]);
+          setJobs([]);
         }
-      } catch {
-        setJobs(MOCK_JOBS as Job[]);
+      } catch (error) {
+        console.error("Error fetching jobs:", error);
+        setJobs([]);
       } finally {
         setLoading(false);
       }

@@ -1,74 +1,43 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Heart, Calendar, DollarSign, ArrowRight, Download, Search, Filter } from 'lucide-react';
 import { Card, Badge, Button, LoadingSpinner } from '@/components/ui';
-
-// Mock Donations Data
-const MOCK_DONATIONS = [
-  {
-    id: '1',
-    campaignId: '1',
-    campaignTitle: 'Scholarship Fund for Underprivileged Students',
-    amount: 25000,
-    date: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString(),
-    status: 'completed',
-    transactionId: 'TXN123456789',
-  },
-  {
-    id: '2',
-    campaignId: '2',
-    campaignTitle: 'New Computer Lab for Engineering Department',
-    amount: 50000,
-    date: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
-    status: 'completed',
-    transactionId: 'TXN987654321',
-  },
-  {
-    id: '3',
-    campaignId: '4',
-    campaignTitle: 'Sports Complex Renovation',
-    amount: 10000,
-    date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-    status: 'completed',
-    transactionId: 'TXN456789123',
-  },
-  {
-    id: '4',
-    campaignId: '5',
-    campaignTitle: 'Community Outreach Program',
-    amount: 15000,
-    date: new Date(Date.now() - 45 * 24 * 60 * 60 * 1000).toISOString(),
-    status: 'completed',
-    transactionId: 'TXN789123456',
-  },
-  {
-    id: '5',
-    campaignId: '3',
-    campaignTitle: 'AI Research Center Development',
-    amount: 100000,
-    date: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
-    status: 'completed',
-    transactionId: 'TXN321654987',
-  },
-];
+import { getMyDonations, Donation } from '@/src/api/campaigns';
 
 export default function DonationsPage() {
-  const [donations] = useState(MOCK_DONATIONS);
+  const [donations, setDonations] = useState<Donation[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
 
+  useEffect(() => {
+    const fetchDonations = async () => {
+      try {
+        setLoading(true);
+        const data = await getMyDonations();
+        setDonations(data || []);
+      } catch (error) {
+        console.error("Error fetching donations:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchDonations();
+  }, []);
+
   const totalDonated = donations.reduce((sum, d) => sum + d.amount, 0);
-  const campaignsSupported = new Set(donations.map(d => d.campaignId)).size;
+  const campaignsSupported = new Set(donations.map(d => d.campaign?.id)).size;
 
   const formatDate = (dateStr: string) => {
+    if (!dateStr) return '';
     const date = new Date(dateStr);
     return date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
   };
 
   const filteredDonations = donations.filter(d =>
-    d.campaignTitle.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    d.transactionId.toLowerCase().includes(searchTerm.toLowerCase())
+    (d.campaign?.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (d.id || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   return (
@@ -142,7 +111,11 @@ export default function DonationsPage() {
           </Button>
         </div>
 
-        {filteredDonations.length === 0 ? (
+        {loading ? (
+          <div className="flex justify-center py-12">
+            <LoadingSpinner />
+          </div>
+        ) : filteredDonations.length === 0 ? (
           <div className="text-center py-12">
             <Heart className="w-12 h-12 text-gray-300 mx-auto mb-4" />
             <p className="text-gray-500">No donations found</p>
@@ -153,16 +126,16 @@ export default function DonationsPage() {
               <div key={donation.id} className="p-4 bg-white rounded-xl">
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <Link href={`/campaigns/${donation.campaignId}`}>
+                    <Link href={`/campaigns/${donation.campaign?.id}`}>
                       <h3 className="font-bold text-[#001145] hover:underline line-clamp-1">
-                        {donation.campaignTitle}
+                        {donation.campaign?.title || 'Unknown Campaign'}
                       </h3>
                     </Link>
                     <div className="flex items-center gap-4 mt-2 text-sm text-[#7088aa]">
                       <span className="flex items-center gap-1">
-                        <Calendar size={14} /> {formatDate(donation.date)}
+                        <Calendar size={14} /> {formatDate(donation.createdAt)}
                       </span>
-                      <span className="font-mono text-xs">{donation.transactionId}</span>
+                      <span className="font-mono text-xs">ID: {donation.id}</span>
                     </div>
                   </div>
                   <div className="text-right">

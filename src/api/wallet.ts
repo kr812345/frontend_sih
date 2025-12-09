@@ -24,6 +24,19 @@ export interface BalanceResponse {
   balance: number;
 }
 
+export interface Transaction {
+  description: string;
+  amount: number;
+  timestamp: string;
+  _id?: string;
+}
+
+export interface TransactionHistoryResponse {
+  userId: string;
+  balance: number;
+  transactions: Transaction[];
+}
+
 export const walletApi = {
   /**
    * Initialize a wallet for a user
@@ -54,6 +67,14 @@ export const walletApi = {
    */
   getBalance: async (userId: string) => {
     const response = await apiClient.get<BalanceResponse>(`/wallet/balance/${userId}`);
+    return response.data;
+  },
+
+  /**
+   * Get transaction history for a user
+   */
+  getTransactions: async (userId: string) => {
+    const response = await apiClient.get<TransactionHistoryResponse>(`/wallet/transactions/${userId}`);
     return response.data;
   }
 };

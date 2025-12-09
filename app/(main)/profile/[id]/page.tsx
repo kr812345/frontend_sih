@@ -6,14 +6,14 @@ import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import { Linkedin, Github, Twitter, Globe, Mail, MapPin, Briefcase, GraduationCap, Users, MessageCircle, Activity, UserPlus, Check, Clock, Star } from 'lucide-react';
 import { Button, LoadingSpinner, Badge } from '@/components/ui';
-import { MOCK_ALUMNI, AlumniProfileComplete } from '@/src/data/mockData';
-import { getAlumniProfile } from '@/src/api/alumni';
+import { getAlumniProfile, AlumniProfile } from '@/src/api/alumni';
 import { sendConnectionRequest } from '@/src/api/connections';
+import KarmaPointsCard from '../components/KarmaPointsCard';
 
 export default function ViewProfilePage() {
   const params = useParams();
   const id = params.id as string;
-  const [profile, setProfile] = useState<AlumniProfileComplete | null>(null);
+  const [profile, setProfile] = useState<AlumniProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('Overview');
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'pending' | 'none'>('none');
@@ -24,15 +24,11 @@ export default function ViewProfilePage() {
     const fetchProfile = async () => {
       try {
         const data = await getAlumniProfile(id);
-        const mockProfile = MOCK_ALUMNI.find(a => a.id === id);
-        setProfile({ ...mockProfile, ...data } as AlumniProfileComplete);
-        setConnectionStatus(mockProfile?.connectionStatus || 'none');
-      } catch {
-        const mockProfile = MOCK_ALUMNI.find(a => a.id === id);
-        if (mockProfile) {
-          setProfile(mockProfile);
-          setConnectionStatus(mockProfile.connectionStatus);
-        }
+        setProfile(data);
+        setConnectionStatus(data.connectionStatus || 'none');
+      } catch (error) {
+        console.error("Error fetching profile:", error);
+        setProfile(null);
       } finally {
         setLoading(false);
       }
@@ -173,7 +169,7 @@ export default function ViewProfilePage() {
       <div className="flex flex-col lg:flex-row gap-6">
 
         {/* Navigation Sidebar */}
-        <div className="lg:w-64 flex-shrink-0">
+        <div className="lg:w-64 flex-shrink-0 space-y-6">
           <div className="bg-[#e4f0ff] p-2 rounded-2xl sticky top-6">
             {tabs.map((tab) => (
               <button
@@ -189,6 +185,9 @@ export default function ViewProfilePage() {
               </button>
             ))}
           </div>
+          
+          {/* Karma Points Card */}
+          <KarmaPointsCard userId={id} />
         </div>
 
         {/* Content Area */}

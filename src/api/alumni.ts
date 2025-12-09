@@ -58,6 +58,7 @@ export interface AlumniProfile {
   education: Education[];
   isVerified: boolean;
   connectionStatus?: 'connected' | 'pending' | 'none';
+  karmaPoints?: number;
 }
 
 export interface AlumniSearchParams extends PaginationParams {
