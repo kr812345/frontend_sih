@@ -11,105 +11,7 @@ import { walletApi } from '../../../src/api/wallet';
 import { showSuccess, showError, showLoading, dismissToast } from '../../../src/lib/toast';
 import { Toaster } from 'react-hot-toast';
 
-// Mock Mentors Data
-const MOCK_MENTORS = [
-  {
-    id: '1',
-    name: 'Rajesh Kumar',
-    avatarUrl: null,
-    currentRole: 'Engineering Manager',
-    currentCompany: 'Google',
-    gradYear: '2015',
-    major: 'Computer Science',
-    location: 'Bangalore',
-    expertise: ['System Design', 'Career Growth', 'Leadership'],
-    yearsOfExperience: 10,
-    menteesTaken: 12,
-    rating: 4.9,
-    availability: 'Available',
-    bio: 'Passionate about helping fresh graduates navigate their tech careers. 10+ years in big tech.',
-  },
-  {
-    id: '2',
-    name: 'Priya Sharma',
-    avatarUrl: null,
-    currentRole: 'Senior Product Manager',
-    currentCompany: 'Microsoft',
-    gradYear: '2016',
-    major: 'Information Technology',
-    location: 'Hyderabad',
-    expertise: ['Product Management', 'Interview Prep', 'Career Switch'],
-    yearsOfExperience: 8,
-    menteesTaken: 8,
-    rating: 4.8,
-    availability: 'Limited',
-    bio: 'Transitioned from engineering to PM. Happy to guide others on the same path.',
-  },
-  {
-    id: '3',
-    name: 'Amit Patel',
-    avatarUrl: null,
-    currentRole: 'Founder & CEO',
-    currentCompany: 'TechStartup Inc.',
-    gradYear: '2012',
-    major: 'Electronics',
-    location: 'Mumbai',
-    expertise: ['Entrepreneurship', 'Fundraising', 'Startups'],
-    yearsOfExperience: 12,
-    menteesTaken: 25,
-    rating: 4.7,
-    availability: 'Available',
-    bio: 'Founded 2 startups. Raised $5M+ in funding. Love helping aspiring entrepreneurs.',
-  },
-  {
-    id: '4',
-    name: 'Neha Gupta',
-    avatarUrl: null,
-    currentRole: 'Data Science Lead',
-    currentCompany: 'Amazon',
-    gradYear: '2017',
-    major: 'Mathematics',
-    location: 'Delhi',
-    expertise: ['Machine Learning', 'Data Science', 'AI/ML Careers'],
-    yearsOfExperience: 7,
-    menteesTaken: 6,
-    rating: 4.9,
-    availability: 'Available',
-    bio: 'PhD in ML from IIT. Working on cutting-edge AI at Amazon. Love teaching ML concepts.',
-  },
-  {
-    id: '5',
-    name: 'Vikram Singh',
-    avatarUrl: null,
-    currentRole: 'Investment Banker',
-    currentCompany: 'Goldman Sachs',
-    gradYear: '2014',
-    major: 'Commerce',
-    location: 'Mumbai',
-    expertise: ['Finance', 'Investment Banking', 'MBA Prep'],
-    yearsOfExperience: 10,
-    menteesTaken: 15,
-    rating: 4.6,
-    availability: 'Limited',
-    bio: 'Helping commerce grads break into investment banking and finance.',
-  },
-  {
-    id: '6',
-    name: 'Kavitha Reddy',
-    avatarUrl: null,
-    currentRole: 'UX Design Director',
-    currentCompany: 'Adobe',
-    gradYear: '2013',
-    major: 'Design',
-    location: 'Bangalore',
-    expertise: ['UX Design', 'Portfolio Building', 'Design Careers'],
-    yearsOfExperience: 11,
-    menteesTaken: 20,
-    rating: 4.8,
-    availability: 'Available',
-    bio: 'Passion for design and mentoring. Built UX teams at 3 companies.',
-  },
-];
+
 
 const EXPERTISE_AREAS = ['All Areas', 'Tech', 'Product', 'Entrepreneurship', 'Data Science', 'Finance', 'Design'];
 
@@ -132,7 +34,7 @@ export default function MentorshipPage() {
       } catch (error) {
         showError('Failed to load mentors. Please try again.');
         console.error('Error fetching mentors:', error);
-        setMentors(MOCK_MENTORS as any);
+        setMentors([]);
       } finally {
         setLoading(false);
       }

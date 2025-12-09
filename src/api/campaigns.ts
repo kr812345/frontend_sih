@@ -64,16 +64,21 @@ export const getAllCampaigns = async (params?: CampaignSearchParams): Promise<Pa
     const response = await apiClient.get<ApiResponse<PaginatedResponse<Campaign> | Campaign[]>>('/campaigns', { params });
     const backendData = response.data.data;
     if (Array.isArray(backendData)) {
-      // Convert array response into paginated shape
+      // Map _id to id if needed
+      const items = backendData.map((item: any) => ({
+        ...item,
+        id: item._id || item.id
+      }));
+      
       return {
-        items: backendData,
-        total: backendData.length,
+        items: items,
+        total: items.length,
         page: params?.page || 1,
         limit: params?.limit || 10,
         totalPages: 1,
       };
     }
-    return backendData || { items: [], total: 0, page: 1, limit: 10, totalPages: 0 };
+    return { items: [], total: 0, page: 1, limit: 10, totalPages: 0 };
   } catch (error) {
     console.error('Error fetching campaigns:', error);
     return { items: [], total: 0, page: params?.page || 1, limit: params?.limit || 10, totalPages: 0 };
@@ -83,7 +88,8 @@ export const getAllCampaigns = async (params?: CampaignSearchParams): Promise<Pa
 export const getCampaign = async (id: string): Promise<Campaign> => {
   try {
     const response = await apiClient.get<ApiResponse<Campaign>>(`/campaigns/${id}`);
-    return response.data.data;
+    const data = response.data.data as any;
+    return { ...data, id: data._id || data.id };
   } catch (error) {
     console.error('Error fetching campaign:', error);
     throw error;

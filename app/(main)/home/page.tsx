@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Heart, MessageCircle, Share2, MoreHorizontal, Send, ImageIcon, Smile, Star, TrendingUp } from 'lucide-react';
 import { getAllEvents } from '@/src/api/events';
+import { getAllPosts, createPost, likePost, unlikePost, Post as ApiPost } from '@/src/api/posts';
 
 // Helper to format date for event cards
 const formatEventDate = (dateStr: string) => {
@@ -14,20 +15,11 @@ const formatEventDate = (dateStr: string) => {
   return { month, day };
 };
 
-interface Post {
-  _id: string;
-  author: {
-    _id: string;
-    name: string;
-    avatar?: string;
-    title?: string;
-  };
-  content: string;
-  images?: string[];
-  createdAt: string;
-  likes: number;
-  comments: number;
-  isLiked?: boolean;
+// Extend ApiPost to include images if needed, or just use it. 
+// For now, we'll assume the API might return images or we ignore them if not in interface.
+// Using intersection to add images if not present in ApiPost, but ApiPost is the source of truth.
+interface Post extends ApiPost {
+  images?: string[]; 
 }
 
 interface EventItem {
@@ -39,53 +31,6 @@ interface EventItem {
   description: string;
 }
 
-// --- MOCK DATA ---
-
-const mockPosts: Post[] = [
-  {
-    _id: '1',
-    author: {
-      _id: 'u1',
-      name: 'Priya Sharma',
-      title: 'Product Manager at Microsoft',
-      avatar: '/profile.jpeg' // Using your placeholder
-    },
-    content: 'Just wrapped up an amazing workshop on System Design with the final year students. The curiosity and energy on campus is unmatched! Always great to give back. 🚀 #Alumni #GivingBack #SystemDesign',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
-    likes: 124,
-    comments: 18,
-    isLiked: true
-  },
-  {
-    _id: '2',
-    author: {
-      _id: 'u2',
-      name: 'Rahul Verma',
-      title: 'Founder at TechFlow',
-      avatar: '/profile.jpeg'
-    },
-    content: 'We are hiring! Looking for 2 frontend developers (React/Next.js) and 1 UI/UX designer. If you are from the 2023-2024 batch, DM me your portfolios. lets build something cool together.',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
-    likes: 89,
-    comments: 45,
-    isLiked: false
-  },
-  {
-    _id: '3',
-    author: {
-      _id: 'u3',
-      name: 'Aditya Kumar',
-      title: 'Software Engineer II at Uber',
-      avatar: '/profile.jpeg'
-    },
-    content: 'Can anyone recommend good resources for advanced Kubernetes patterns? Working on a scaling problem and would love some community insights.',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(), // 2 days ago
-    likes: 32,
-    comments: 12,
-    isLiked: false
-  }
-];
-
 const karmaHistory = [
   { id: 1, reason: 'Helped a junior with React', points: 50, date: '2 hours ago' },
   { id: 2, reason: 'Posted a job opportunity', points: 30, date: '1 day ago' },
@@ -93,21 +38,23 @@ const karmaHistory = [
 ];
 
 export default function HomePage() {
-  // Initialize with mock posts
-  const [posts, setPosts] = useState<Post[]>(mockPosts);
+  const [posts, setPosts] = useState<Post[]>([]);
   const [events, setEvents] = useState<EventItem[]>([]);
-  const [loading, setLoading] = useState(false); // Set to false to show mock data immediately
+  const [loading, setLoading] = useState(true);
   const [newPost, setNewPost] = useState('');
   const [posting, setPosting] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Commenting out real post fetching to keep mock data visible for design
-        // const postsRes = await getAllPosts({ limit: 10 });
-        // if (postsRes.items) setPosts(...)
+        setLoading(true);
+        const postsRes = await getAllPosts({ limit: 10 });
+        if (postsRes?.items) {
+          setPosts(postsRes.items);
+        } else if (Array.isArray(postsRes)) {
+             setPosts(postsRes);
+        }
 
-        // Keep fetching events real-time if needed, or we can mock this too
         const eventsRes = await getAllEvents({ limit: 5 });
         if (eventsRes) {
           setEvents(eventsRes.slice(0, 5));
@@ -115,46 +62,59 @@ export default function HomePage() {
 
       } catch (error) {
         console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchData();
   }, []);
 
-  const handleLike = (postId: string) => {
-    // Optimistic UI update for mock data
-    setPosts(posts.map(p =>
-      p._id === postId
-        ? { ...p, isLiked: !p.isLiked, likes: p.isLiked ? p.likes - 1 : p.likes + 1 }
-        : p
-    ));
+  const handleLike = async (postId: string) => {
+    const postIndex = posts.findIndex(p => p._id === postId);
+    if (postIndex === -1) return;
+
+    const oldPosts = [...posts];
+    const updatedPost = { ...posts[postIndex] };
+
+    // Optimistic update
+    if (updatedPost.isLiked) {
+        updatedPost.isLiked = false;
+        updatedPost.likes = Math.max(0, updatedPost.likes - 1);
+    } else {
+        updatedPost.isLiked = true;
+        updatedPost.likes += 1;
+    }
+
+    const newPosts = [...posts];
+    newPosts[postIndex] = updatedPost;
+    setPosts(newPosts);
+
+    try {
+        if (updatedPost.isLiked) {
+            await likePost(postId);
+        } else {
+            await unlikePost(postId);
+        }
+    } catch (error) {
+        console.error("Error toggling like:", error);
+        setPosts(oldPosts); // Revert
+    }
   };
 
   const handleCreatePost = async () => {
     if (!newPost.trim() || posting) return;
     setPosting(true);
 
-    // Simulate API call delay
-    setTimeout(() => {
-      const newMockPost: Post = {
-        _id: Math.random().toString(),
-        author: {
-          _id: 'me',
-          name: 'You', // In real app, get from auth context
-          avatar: '/profile.jpeg',
-          title: 'Alumni'
-        },
-        content: newPost,
-        createdAt: new Date().toISOString(),
-        likes: 0,
-        comments: 0,
-        isLiked: false,
-      };
-
-      setPosts([newMockPost, ...posts]);
-      setNewPost('');
-      setPosting(false);
-    }, 500);
+    try {
+        const createdPost = await createPost(newPost);
+        setPosts([createdPost, ...posts]);
+        setNewPost('');
+    } catch (error) {
+        console.error("Error creating post:", error);
+    } finally {
+        setPosting(false);
+    }
   };
 
   return (
@@ -165,9 +125,6 @@ export default function HomePage() {
       */}
       <div className="w-full px-4 py-6">
 
-        {/* GRID UPDATES:
-           1. gap-10: Increased gap between the main feed and the sidebar
-        */}
         {/* GRID UPDATES:
            1. gap-6: Reduced gap between the main feed and the sidebar
         */}
@@ -209,7 +166,7 @@ export default function HomePage() {
                   style={{ backgroundColor: 'var(--primary-color)' }}
                 >
                   <Send size={16} />
-                  Post
+                  {posting ? 'Posting...' : 'Post'}
                 </button>
               </div>
             </div>
@@ -231,11 +188,11 @@ export default function HomePage() {
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex gap-3">
                       <div className="w-12 h-12 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--card-bg)' }}>
-                        <Image src={post.author.avatar || '/profile.jpeg'} alt={post.author.name} width={48} height={48} className="w-full h-full object-cover" />
+                        <Image src={post.author?.avatar || '/profile.jpeg'} alt={post.author?.name || 'User'} width={48} height={48} className="w-full h-full object-cover" />
                       </div>
                       <div>
-                        <h4 className="font-bold" style={{ color: 'var(--primary-color)' }}>{post.author.name}</h4>
-                        <p className="text-sm" style={{ color: 'var(--tertiary)' }}>{post.author.title}</p>
+                        <h4 className="font-bold" style={{ color: 'var(--primary-color)' }}>{post.author?.name || 'Anonymous'}</h4>
+                        <p className="text-sm" style={{ color: 'var(--tertiary)' }}>{post.author?.title || 'Member'}</p>
                       </div>
                     </div>
                     <button className="p-2 text-gray-400 hover:text-[#001145] hover:bg-gray-100 rounded-lg transition-colors">

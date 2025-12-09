@@ -5,11 +5,10 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Search, UserPlus, MapPin, Briefcase, GraduationCap, Mail, Check, Clock, Filter } from 'lucide-react';
 import { Button, Card, Badge, LoadingSpinner } from '@/components/ui';
-import { MOCK_ALUMNI, AlumniProfileComplete } from '@/src/data/mockData';
-import { getAlumniDirectory } from '@/src/api/alumni';
+import { getAlumniDirectory, AlumniProfile } from '@/src/api/alumni';
 
 export default function AlumniDirectoryPage() {
-  const [alumni, setAlumni] = useState<AlumniProfileComplete[]>([]);
+  const [alumni, setAlumni] = useState<AlumniProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [batchFilter, setBatchFilter] = useState('all');
@@ -20,13 +19,13 @@ export default function AlumniDirectoryPage() {
       try {
         const data = await getAlumniDirectory();
         if (data && data.length > 0) {
-          setAlumni(data as AlumniProfileComplete[]);
+          setAlumni(data as AlumniProfile[]);
         } else {
-          setAlumni(MOCK_ALUMNI);
+          setAlumni([]);
         }
       } catch (error) {
-        console.log('Using mock alumni data');
-        setAlumni(MOCK_ALUMNI);
+        console.error('Error fetching alumni:', error);
+        setAlumni([]);
       } finally {
         setLoading(false);
       }
@@ -37,9 +36,9 @@ export default function AlumniDirectoryPage() {
   const filteredAlumni = alumni.filter(a => {
     const matchesSearch =
       a.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      a.currentCompany.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (a.currentCompany || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
       a.major.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      a.currentRole.toLowerCase().includes(searchTerm.toLowerCase());
+      (a.currentRole || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesBatch = batchFilter === 'all' || a.gradYear === batchFilter;
     return matchesSearch && matchesBatch;
   });
@@ -192,7 +191,7 @@ export default function AlumniDirectoryPage() {
               )}
 
               <div className="flex gap-2">
-                {getConnectionButton(person.connectionStatus)}
+                {getConnectionButton(person.connectionStatus || 'none')}
                 <Link href={`/messages?user=${person.id}`} className="flex-1">
                   <button className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-medium bg-white text-[#001145]">
                     <Mail size={16} /> Message

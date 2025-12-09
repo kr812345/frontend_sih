@@ -1,3 +1,4 @@
+// ... imports
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -6,23 +7,12 @@ import { useRouter } from 'next/navigation';
 import { Button, LoadingSpinner } from '@/components/ui';
 import AIAnalysisModal from '@/components/AIAnalysisModal';
 import { analyzeJobCompatibility } from '@/src/lib/gemini';
-import { MOCK_JOBS } from '@/src/data/mockData';
-import { getAllJobs } from '@/src/api/jobs';
+import { getAllJobs, applyToJob, Job } from '@/src/api/jobs';
+import { verifyAlumni, User } from '@/src/api/auth';
+import JobApplicationModal from '@/components/jobs/JobApplicationModal';
+import toast from 'react-hot-toast';
 
-interface Job {
-  _id: string;
-  title: string;
-  company: string;
-  location?: string;
-  type: 'full-time' | 'internship';
-  isOpen: boolean;
-  description?: string;
-  skillsRequired: string[];
-  salary?: string;
-  experienceLevel?: string;
-  deadline?: string;
-  createdAt: string;
-}
+// ... interface Job (keep existing)
 
 export default function JobsPage() {
   const router = useRouter();
@@ -31,6 +21,7 @@ export default function JobsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [typeFilter, setTypeFilter] = useState('all');
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
 
   // AI Analysis State
   const [isAIModalOpen, setIsAIModalOpen] = useState(false);
@@ -38,19 +29,22 @@ export default function JobsPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analyzingJobTitle, setAnalyzingJobTitle] = useState('');
 
+  // Job Application Modal State
+  const [isApplyModalOpen, setIsApplyModalOpen] = useState(false);
+
   const handleAnalyzeJob = async (e: React.MouseEvent, job: Job) => {
-    e.stopPropagation(); // Prevent card click
+    // ... existing logic
+    e.stopPropagation();
     setAnalyzingJobTitle(job.title);
     setAiAnalysis(null);
     setIsAIModalOpen(true);
     setIsAnalyzing(true);
     
     try {
-      // Pass a mock user profile or fetch real one if available
       const userProfile = {
-        name: "Current User",
+        name: currentUser?.name || "Current User",
         skills: ["React", "JavaScript", "Node.js"], // ideally fetch from store
-        experience: "Students"
+        experience: currentUser?.userType || "Student"
       };
       const result = await analyzeJobCompatibility(job, userProfile);
       setAiAnalysis(result);
@@ -62,11 +56,17 @@ export default function JobsPage() {
   };
 
   useEffect(() => {
-    const fetchJobs = async () => {
+    const fetchData = async () => {
       try {
-        const response = await getAllJobs({ page: 1, limit: 50 });
-        if (response && response.length > 0) {
-          setJobs(response.map((j: any) => ({
+        const [jobsData, user] = await Promise.all([
+          getAllJobs({ page: 1, limit: 50 }),
+          verifyAlumni()
+        ]);
+        
+        setCurrentUser(user);
+
+        if (jobsData && jobsData.length > 0) {
+          setJobs(jobsData.map((j: any) => ({
             _id: j.id || j._id, title: j.title, company: j.company, location: j.location,
             type: j.type, isOpen: j.isOpen ?? true, salary: j.salary || 'Competitive',
             experienceLevel: j.experienceLevel || 'Not specified',
@@ -74,16 +74,34 @@ export default function JobsPage() {
             description: j.description, createdAt: j.createdAt, skillsRequired: j.skillsRequired || [],
           } as Job)));
         } else {
-          setJobs(MOCK_JOBS as Job[]);
+          setJobs([]);
         }
-      } catch {
-        setJobs(MOCK_JOBS as Job[]);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        setJobs([]);
       } finally {
         setLoading(false);
       }
     };
-    fetchJobs();
+    fetchData();
   }, []);
+
+  const handleApplyClick = () => {
+    if (!selectedJob) return;
+    setIsApplyModalOpen(true);
+  };
+
+  const handleSubmitApplication = async (data: { resumeUrl: string; coverLetter: string }) => {
+    if (!selectedJob) return;
+    try {
+      await applyToJob(selectedJob._id, data);
+      toast.success('Application submitted successfully!');
+      setIsApplyModalOpen(false);
+    } catch (error: any) {
+      console.error('Failed to apply:', error);
+      toast.error(error?.response?.data?.message || 'Failed to submit application');
+    }
+  };
 
   const filteredJobs = jobs.filter(job => {
     const matchesSearch = job.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -108,10 +126,12 @@ export default function JobsPage() {
           <h1 className="text-3xl font-bold text-[#001145]">Job Board</h1>
           <p className="text-gray-500">{jobs.length} open positions</p>
         </div>
-        <Button onClick={() => router.push('/jobs/create')} leftIcon={<Plus size={20} />}>Post a Job</Button>
+        {currentUser?.userType === 'Alumni' && (
+           <Button onClick={() => router.push('/jobs/create')} leftIcon={<Plus size={20} />}>Post a Job</Button>
+        )}
       </div>
 
-      {/* Search & Filters */}
+      {/* Search & Filters (Keep existing) */}
       <div className="bg-white rounded-xl p-4">
         <div className="flex flex-col md:flex-row gap-4">
           <div className="flex-1 relative">
@@ -131,7 +151,7 @@ export default function JobsPage() {
         </div>
       </div>
 
-      {/* Stats */}
+      {/* Stats (Keep existing) */}
       <div className="grid grid-cols-3 gap-4">
         <div className="bg-white rounded-xl p-4 text-center">
           <p className="text-2xl font-bold text-[#001145]">{jobs.length}</p>
@@ -217,7 +237,9 @@ export default function JobsPage() {
                     ))}
                   </div>
                 </div>
-                <Button className="w-full" leftIcon={<ExternalLink size={18} />}>Apply Now</Button>
+                {currentUser?.userType === 'Student' && (
+                  <Button className="w-full" leftIcon={<ExternalLink size={18} />} onClick={handleApplyClick}>Apply Now</Button>
+                )}
               </div>
             ) : (
               <div className="bg-[#e4f0ff] rounded-xl p-12 text-center border-2 border-dashed border-[#001145]/20">
@@ -235,6 +257,15 @@ export default function JobsPage() {
         analysis={aiAnalysis}
         title={`Job Fit Analysis: ${analyzingJobTitle}`}
       />
+      {selectedJob && (
+        <JobApplicationModal
+          isOpen={isApplyModalOpen}
+          onClose={() => setIsApplyModalOpen(false)}
+          jobTitle={selectedJob.title}
+          user={currentUser ? { name: currentUser.name || "User", email: currentUser.email || "" } : null}
+          onSubmit={handleSubmitApplication}
+        />
+      )}
     </div>
   );
 }

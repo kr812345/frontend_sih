@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Calendar, MapPin, Clock, Users, Plus, Search } from 'lucide-react';
 import { Button, Card, Badge, LoadingSpinner } from '@/components/ui';
-import { MOCK_EVENTS } from '@/src/data/mockData';
 import { getAllEvents } from '@/src/api/events';
 
 export default function EventsPage() {
@@ -22,11 +21,11 @@ export default function EventsPage() {
         if (data && data.length > 0) {
           setEvents(data);
         } else {
-          setEvents(MOCK_EVENTS);
+          setEvents([]);
         }
       } catch (error) {
-        console.log('Using mock events data');
-        setEvents(MOCK_EVENTS);
+        console.error('Error fetching events:', error);
+        setEvents([]);
       } finally {
         setLoading(false);
       }
